@@ -5,6 +5,8 @@ Kortlek för off-ice smidighetsträning. Varje kort innehåller bild, syfte och 
 
 Appen är öppen källkod. **Foton lagras krypterat** med [git-crypt](https://github.com/AGWA/git-crypt) och är aldrig synliga för utomstående.
 
+![Appen](./public/hockey-cards-app.png)
+
 ---
 
 ## Kom igång
