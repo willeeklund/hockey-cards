@@ -1,0 +1,155 @@
+/* ── Toolbar (screen only) ───────────────────────────────────────────── */
+.toolbar {
+  background: #1a1a2e;
+  padding: 12px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.toolbar-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-logo {
+  font-size: 1.5rem;
+}
+
+.toolbar-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.toolbar-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-btn {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.nav-btn:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.nav-btn.active {
+  background: #ffd60a;
+  border-color: #ffd60a;
+  color: #1a1a2e;
+}
+
+
+.print-btn {
+  background: #ffd60a;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.1s;
+}
+
+.print-btn:hover {
+  background: #ffc300;
+  transform: scale(1.04);
+}
+
+/* ── Page wrapper ────────────────────────────────────────────────────── */
+.pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 32px 16px;
+  background: #e8e8e8;
+  min-height: 100vh;
+}
+
+/* ── Card page (screen) ──────────────────────────────────────────────── */
+.card-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 6px;
+  background: #ccc;
+  padding: 6px;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  width: fit-content;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #888;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* ── Print styles ────────────────────────────────────────────────────── */
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .pages {
+    background: white;
+    gap: 0;
+    padding: 0;
+    display: block;
+  }
+
+  /* Liggande A4: 297×210mm, 3×2 grid */
+  .card-page {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 6mm;
+    padding: 13mm 5mm 5mm 5mm; /* extra top margin clears standard hole-punch */
+    background: white;
+    border-radius: 0;
+    box-shadow: none;
+    width: 297mm;
+    height: 210mm;
+    box-sizing: border-box;
+    page-break-after: always;
+    break-after: page;
+    overflow: hidden;
+  }
+
+  .card-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+}

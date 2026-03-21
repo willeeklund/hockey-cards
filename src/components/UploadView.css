@@ -1,0 +1,160 @@
+.upload-view {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upload-intro {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #555;
+  text-align: center;
+  padding-bottom: 8px;
+}
+
+/* ── Upload item row ─────────────────────────────────────────────────── */
+.upload-item {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+  flex-wrap: wrap;
+}
+
+.upload-item.success {
+  border-color: #22c55e;
+}
+
+.upload-item.error {
+  border-color: #ef4444;
+}
+
+.upload-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.upload-emoji {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.upload-meta {
+  min-width: 0;
+}
+
+.upload-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-filename {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #999;
+  margin-top: 2px;
+}
+
+/* ── Preview thumbnail ───────────────────────────────────────────────── */
+.upload-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid #e2e8f0;
+  background: #f1f5f9;
+}
+
+.upload-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.upload-thumb--missing {
+  border: 2px dashed #fca5a5;
+  background: #fff1f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #fca5a5;
+  font-weight: 900;
+}
+
+/* ── Upload button ───────────────────────────────────────────────────── */
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  min-width: 140px;
+  justify-content: center;
+  transition: transform 0.1s, background 0.2s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.upload-btn--idle {
+  background: #ffd60a;
+  color: #1a1a2e;
+}
+
+.upload-btn--idle:active {
+  transform: scale(0.96);
+  background: #ffc300;
+}
+
+.upload-btn--uploading {
+  background: #e2e8f0;
+  color: #64748b;
+  cursor: default;
+}
+
+.upload-btn--success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.upload-btn--error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #94a3b8;
+  border-top-color: #475569;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
