@@ -17,6 +17,7 @@ export default function ExerciseCard({ card, index = 0 }) {
       <header className="card-header">
         <span className="card-emoji">{card.emoji || '⭐'}</span>
         <h2 className="card-title">{card.title || 'Övning'}</h2>
+        <img src="/gota-logga.png" alt="IK Göta" className="card-team-logo" />
       </header>
 
       <div className="card-image-area">
