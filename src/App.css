@@ -85,6 +85,18 @@
 }
 
 /* ── Card page (screen) ──────────────────────────────────────────────── */
+.card-back-page {
+  background: #f8f7f4;
+}
+
+.card-back-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 6px;
+  padding: 6px;
+}
+
 .card-page {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -95,6 +107,13 @@
   border-radius: 4px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   width: fit-content;
+}
+
+/* Page pair groups a front and back sheet */
+.page-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 /* ── Empty state ─────────────────────────────────────────────────────── */
@@ -130,6 +149,11 @@
     display: block;
   }
 
+  /* Flatten the page-pair wrapper so card-pages act as direct children */
+  .page-pair {
+    display: contents;
+  }
+
   /* Liggande A4: 297×210mm, 3×2 grid */
   .card-page {
     display: grid;
@@ -148,7 +172,29 @@
     overflow: hidden;
   }
 
-  .card-page:last-child {
+  /* Back page: plain A4 container, no transform (transforms break print rendering) */
+  .card-back-page {
+    display: block;
+    background: #f8f7f4;
+    padding: 0;
+  }
+
+  /* Inner grid is what gets rotated — avoids the print/transform bug */
+  .card-back-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 6mm;
+    padding: 13mm 5mm 5mm 5mm; /* large padding at bottom → physical top after 180° flip */
+    width: 297mm;
+    height: 210mm;
+    box-sizing: border-box;
+    transform: rotate(180deg);
+    transform-origin: center center;
+  }
+
+  /* Remove trailing page-break from the very last back page */
+  .page-pair:last-child .card-back-page {
     page-break-after: auto;
     break-after: auto;
   }

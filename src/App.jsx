@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import ExerciseCard from './components/ExerciseCard'
+import CardBack from './components/CardBack'
 import UploadView from './components/UploadView'
 import SelectionBar from './components/SelectionBar'
 import { parseCard } from './utils/parseCard'
@@ -83,10 +84,19 @@ function App() {
       ) : (
         <main className="pages">
           {pages.map((page, pageIdx) => (
-            <div key={pageIdx} className="card-page">
-              {page.map((card, i) => (
-                <ExerciseCard key={card.id} card={card} index={pageIdx * 4 + i} />
-              ))}
+            <div key={pageIdx} className="page-pair">
+              <div className="card-page">
+                {page.map((card, i) => (
+                  <ExerciseCard key={card.id} card={card} index={pageIdx * 4 + i} />
+                ))}
+              </div>
+              <div className="card-page card-back-page">
+                <div className="card-back-grid">
+                  {Array.from({ length: page.length }).map((_, i) => (
+                    <CardBack key={i} />
+                  ))}
+                </div>
+              </div>
             </div>
           ))}
         </main>
