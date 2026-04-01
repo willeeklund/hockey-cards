@@ -8,4 +8,7 @@ tips:
   - Dribbla pucken sakta fram och tillbaka
   - Känn efter – var är pucken nu?
   - Ingen fart behövs, fokus är känslan i händerna
+tags:
+  - Klubbteknik
+  - Individuella
 ---

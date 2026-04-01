@@ -8,4 +8,7 @@ tips:
   - Vrid långsamt och kontrollerat
   - Håll ryggen lång och rak medan du vrider
   - Andas ut när du vrider dig – det hjälper!
+tags:
+  - Individuella
+  - Rörlighet
 ---

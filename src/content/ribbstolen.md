@@ -7,4 +7,7 @@ tips:
   - Klättra upp hela ribbstolen hand för hand, ett steg i taget
   - Håll kroppen nära ribbstolen och använd benen aktivt
   - Klättra ned lika kontrollerat som du klättrade upp – det tränar också!
+tags:
+  - Individuella
+  - Rörlighet
 ---

@@ -3,8 +3,6 @@
   background: #fff;
   display: flex;
   flex-direction: column;
-
-  /* Screen size – låt höjden växa med innehållet */
   width: 260px;
 }
 
@@ -46,18 +44,59 @@
 
 /* ── Image area ──────────────────────────────────────────────────────── */
 .card-image-area {
-  flex: 0 0 38%;
-  background: #f0f4f8;
+  flex-shrink: 0;
+  /* Matches printed proportions: A4 landscape 3×2 grid
+     Card: 91.67mm × 93mm, image = 36% of height = 33.48mm → ratio ≈ 2.74:1 */
+  aspect-ratio: 91.67 / 33.48;
+  background: #fff;
   border-bottom: 2px solid var(--card-color);
   overflow: hidden;
+  position: relative;
+  cursor: pointer; /* click to open edit modal */
+}
+
+/* Pan/zoom wrapper — transform via CSS custom properties so the same
+   normalised (x,y) looks identical on the small card and the large modal */
+.card-image-wrapper {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  transform: translate(calc(var(--tx, 0) * 100%), calc(var(--ty, 0) * 100%)) scale(var(--scale, 1));
 }
 
 .card-image {
   width: 100%;
   height: 100%;
-  /* object-fit: contain; */
-  object-fit: cover;
-  padding: 4px;
+  object-fit: contain; /* full image visible; user zooms in to frame the crop */
+  display: block;
+}
+
+/* Hover overlay (screen only) */
+.card-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.card-image-area:hover .card-edit-overlay { opacity: 1; }
+
+/* Small dot indicating a custom crop is set */
+.card-crop-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffd60a;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.3);
+  pointer-events: none;
 }
 
 .card-image-placeholder {
@@ -67,22 +106,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  border: 2.5px dashed var(--card-color);
-  margin: 6px;
-  width: calc(100% - 12px);
-  height: calc(100% - 12px);
-  border-radius: 6px;
-  background: #f8fafc;
+  gap: 4px;
 }
 
-.placeholder-icon {
-  font-size: 1.6rem;
-  opacity: 0.5;
-}
-
+.placeholder-icon { font-size: 1.3rem; opacity: 0.5; }
 .placeholder-text {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: #aaa;
   text-transform: uppercase;
@@ -99,11 +128,7 @@
   overflow: hidden;
 }
 
-.card-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.card-section { display: flex; flex-direction: column; gap: 2px; }
 
 .section-header {
   font-size: 0.65rem;
@@ -116,9 +141,7 @@
   gap: 3px;
 }
 
-.section-icon {
-  font-size: 0.75rem;
-}
+.section-icon { font-size: 0.75rem; }
 
 .section-text {
   font-size: 0.68rem;
@@ -159,7 +182,7 @@
     height: 100%;
     border: 0.4mm solid #ccc;
     border-radius: 3mm;
-    overflow: hidden;  /* klipp vid print så kortet inte flödar utanför gridcellen */
+    overflow: hidden;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -170,50 +193,25 @@
     -webkit-print-color-adjust: exact;
   }
 
-  .card-emoji {
-    font-size: 16pt;
-  }
-
-  .card-title {
-    font-size: 14pt;
-  }
+  .card-emoji { font-size: 16pt; }
+  .card-title { font-size: 14pt; }
 
   .card-image-area {
     flex: 0 0 36%;
+    aspect-ratio: unset;
+    cursor: default;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
-  .placeholder-text {
-    font-size: 8pt;
-  }
+  /* transform is preserved for print — the normalised values produce the
+     same crop because the wrapper fills the grid cell (same aspect ratio) */
+  .card-image-wrapper { will-change: auto; }
 
-  .card-body {
-    padding: 6pt 9pt;
-    gap: 5pt;
-  }
-
-  .section-header {
-    font-size: 8.5pt;
-    margin-bottom: 1pt;
-  }
-
-  .section-icon {
-    font-size: 9pt;
-  }
-
-  .section-text {
-    font-size: 8.5pt;
-    line-height: 1.4;
-  }
-
-  .tips-list {
-    gap: 2pt;
-  }
-
-  .tips-list li {
-    font-size: 8pt;
-    line-height: 1.38;
-    padding-left: 11pt;
-  }
+  .card-body { padding: 6pt 9pt; gap: 5pt; }
+  .section-header { font-size: 8.5pt; margin-bottom: 1pt; }
+  .section-icon { font-size: 9pt; }
+  .section-text { font-size: 8.5pt; line-height: 1.4; }
+  .tips-list { gap: 2pt; }
+  .tips-list li { font-size: 8pt; line-height: 1.38; padding-left: 11pt; }
 }

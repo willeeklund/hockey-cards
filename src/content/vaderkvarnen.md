@@ -8,4 +8,7 @@ tips:
   - Nå höger hand mot vänster fot och titta upp mot taket
   - Byt sida – vänster hand mot höger fot
   - Håll tempot jämnt och sträck så långt du kan
+tags:
+  - Individuella
+  - Rörlighet
 ---

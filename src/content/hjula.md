@@ -9,4 +9,7 @@ tips:
   - Lyft benen över i en sving – ena benet efter det andra
   - Landa mjukt med fötterna på var sin sida
   - Öva långsamt först – fart kan du lägga på sedan!
+tags:
+  - Individuella
+  - Rörlighet
 ---

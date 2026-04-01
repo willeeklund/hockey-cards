@@ -8,4 +8,7 @@ tips:
   - Stå på höger ben – böj i fotled, knäled och höftled
   - Tryck, dra och gör det du kan för att rubba motståndaren!
   - Sätter motståndaren ned foten eller tappar balansen – poäng till dig!
+tags:
+  - Parövningar
+  - Rörlighet
 ---

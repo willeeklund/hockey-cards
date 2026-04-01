@@ -8,4 +8,7 @@ tips:
   - Böj knät när du landar – mjuk landning!
   - Håll armarna utåt för balansen
   - Försök hoppa längre och längre för varje gång
+tags:
+  - Individuella
+  - Rörlighet
 ---

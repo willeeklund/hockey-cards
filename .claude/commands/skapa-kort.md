@@ -13,6 +13,20 @@ Skapa ett nytt övningskort för hockey-cards-appen baserat på användarens bes
    - Inget `image`-fält – bilden härleds automatiskt från filnamnet (`<kebab-case-namn>.jpg`)
    - `syfte`: En mening som förklarar varför övningen är bra – engagerande och motiverande för unga hockeyspelarna
    - `tips`: **Max 4 punkter** – konkreta instruktioner för hur man gör övningen
+   - `tags`: Välj relevanta taggar baserat på övningens karaktär (se taggguide nedan)
+
+## Tagg-guide
+
+Tillgängliga taggar (välj en eller flera som passar):
+
+| Tagg | Använd när övningen... |
+|------|------------------------|
+| `Klubbteknik` | involverar hockeyklubba, puck, passningar, dribbel eller skott |
+| `Parövningar` | kräver en partner eller görs två och två |
+| `Individuella` | kan utföras helt ensam, utan partner |
+| `Rörlighet` | tränar flexibilitet, stretch, balans eller kroppskontroll |
+
+**Välj taggar aktivt** – de flesta övningar får 1–2 taggar. En övning kan ha flera om den passar in i fler kategorier (t.ex. en parövning med klubba får både `Parövningar` och `Klubbteknik`).
 
 ## Format
 
@@ -27,6 +41,9 @@ tips:
   - <Tips 2>
   - <Tips 3>
   - <Tips 4>
+tags:
+  - <Tagg 1>
+  - <Tagg 2>
 ---
 ```
 
@@ -35,5 +52,6 @@ tips:
 - Välj alltid en **unik färg** – kolla befintliga kort först
 - Filnamnet ska vara **kebab-case på svenska**, t.ex. `hoppa-på-ett-ben.md`
 - Tonen ska vara **rolig och motiverande** – målgruppen är unga hockeyspelare
+- **Taggar är obligatoriska** – varje kort ska ha minst en tagg
 
 $ARGUMENTS

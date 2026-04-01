@@ -8,4 +8,7 @@ tips:
   - Sträck fram det främre knät – håll hälen kvar i marken!
   - Nå fram till klubban som ligger 20 cm framför foten
   - Håll positionen ett par sekunder innan du går tillbaka
+tags:
+  - Individuella
+  - Rörlighet
 ---

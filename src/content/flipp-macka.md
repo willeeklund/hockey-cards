@@ -8,4 +8,7 @@ tips:
   - Skopa under pucken med bladet och lyft den mjukt till kompisen
   - Kompisen fångar och flippar tillbaka
   - Räkna hur många lyftpassningar ni klarar!
+tags:
+  - Klubbteknik
+  - Individuella
 ---

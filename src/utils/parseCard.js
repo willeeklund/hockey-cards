@@ -10,6 +10,9 @@
  *   tips:
  *     - tip one
  *     - tip two
+ *   tags:
+ *     - Klubbteknik
+ *     - Parövningar
  */
 export function parseCard(raw, filePath) {
   const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/)

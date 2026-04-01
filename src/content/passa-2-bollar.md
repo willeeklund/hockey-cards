@@ -7,4 +7,7 @@ tips:
   - Stå mitt emot varandra och ha en boll var – båda bollarna ska röra sig hela tiden
   - Titta dit du ska passa, inte på bollen du tar emot
   - Utmaning: öka tempot eller gå längre ifrån varandra!
+tags:
+  - Klubbteknik
+  - Parövningar
 ---

@@ -8,4 +8,7 @@ tips:
   - Rulla på ryggraden – inte på halsen
   - Ta sats med armarna framför dig
   - Landa mjukt och rulla upp till stående
+tags:
+  - Individuella
+  - Rörlighet
 ---

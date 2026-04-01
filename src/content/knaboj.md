@@ -7,4 +7,7 @@ tips:
   - Fötterna axelbrett isär
   - Ryggen rak och blicken framåt
   - Gå ner tills låren är vågräta – som att sitta på en osynlig stol
+tags:
+  - Individuella
+  - Rörlighet
 ---

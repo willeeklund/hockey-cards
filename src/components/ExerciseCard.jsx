@@ -4,13 +4,17 @@ import './ExerciseCard.css'
 const FALLBACK_COLORS = ['#FF6B35', '#00B4D8', '#9B5DE5', '#F15BB5']
 const TEAM_FOLDER = import.meta.env.IMAGES_FOLDER || 'ikgota-team16'
 
-export default function ExerciseCard({ card, index = 0 }) {
+function isEdited(xform) {
+  return Math.abs(xform.x) > 0.001 || Math.abs(xform.y) > 0.001 || Math.abs(xform.scale - 1) > 0.001
+}
+
+export default function ExerciseCard({ card, index = 0, transform = { x: 0, y: 0, scale: 1 }, onEdit }) {
   const [imgError, setImgError] = useState(false)
 
   const color = card.color || FALLBACK_COLORS[index % FALLBACK_COLORS.length]
-
   const imageSrc = `/exercise_images/${TEAM_FOLDER}/${card.id}.jpg`
   const hasImage = !imgError
+  const edited = isEdited(transform)
 
   return (
     <article className="exercise-card" style={{ '--card-color': color }}>
@@ -20,41 +24,45 @@ export default function ExerciseCard({ card, index = 0 }) {
         <img src="/gota-logga.png" alt="IK Göta" className="card-team-logo" />
       </header>
 
-      <div className="card-image-area">
+      {/* Image area — click to open edit modal */}
+      <div className="card-image-area" onClick={onEdit}>
         {hasImage ? (
-          <img
-            src={imageSrc}
-            alt={card.title}
-            className="card-image"
-            onError={() => setImgError(true)}
-          />
+          <div
+            className="card-image-wrapper"
+            style={{ '--tx': transform.x, '--ty': transform.y, '--scale': transform.scale }}
+          >
+            <img
+              src={imageSrc}
+              alt={card.title}
+              className="card-image"
+              onError={() => setImgError(true)}
+              draggable={false}
+            />
+          </div>
         ) : (
           <div className="card-image-placeholder">
             <span className="placeholder-icon">📷</span>
-            <p className="placeholder-text">Klistra in foto här</p>
+            <p className="placeholder-text">Klicka för att ladda upp</p>
           </div>
         )}
+        {/* Hover overlay — screen only */}
+        <div className="card-edit-overlay no-print">✏️</div>
+        {/* Crop-set indicator */}
+        {edited && <span className="card-crop-dot no-print" title="Beskärning inställd" />}
       </div>
 
       <div className="card-body">
         {card.syfte && (
           <section className="card-section">
-            <h3 className="section-header">
-              <span className="section-icon">🎯</span> Varför?
-            </h3>
+            <h3 className="section-header"><span className="section-icon">🎯</span> Varför?</h3>
             <p className="section-text">{card.syfte}</p>
           </section>
         )}
-
         {card.tips && card.tips.length > 0 && (
           <section className="card-section">
-            <h3 className="section-header">
-              <span className="section-icon">💡</span> Tänk på!
-            </h3>
+            <h3 className="section-header"><span className="section-icon">💡</span> Tänk på!</h3>
             <ul className="tips-list">
-              {card.tips.map((tip, i) => (
-                <li key={i}>{tip}</li>
-              ))}
+              {card.tips.map((tip, i) => <li key={i}>{tip}</li>)}
             </ul>
           </section>
         )}

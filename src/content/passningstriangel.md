@@ -8,4 +8,7 @@ tips:
   - Starta med en puck – passa runt och håll tempot uppe
   - Lägg in en puck till – nu gäller det att ha koll!
   - Hur många puckar klarar ni utan att någon ramlar av?
+tags:
+  - Klubbteknik
+  - Parövningar
 ---

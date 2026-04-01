@@ -8,4 +8,6 @@ tips:
   - Starta med kort avstånd mellan varandra
   - Räkna tillsammans 3, 2, 1 – sen gäller det att sprinta och fånga varandras klubba!
   - Öka avståndet allt eftersom för ökad utmaning
+tags:
+  - Parövningar
 ---

@@ -8,4 +8,7 @@ tips:
   - Lyft upp bröstet lugnt och kontrollerat
   - Håll positionen – ingen fart behövs!
   - Titta ner mot golvet så att nacken är avslappnad
+tags:
+  - Individuella
+  - Rörlighet
 ---

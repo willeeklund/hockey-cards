@@ -8,4 +8,7 @@ tips:
   - En leder och den andra speglar – byt ledare när tränaren visslar
   - Håll huvudet upp och ögonen på kompisen – inte på bollen!
   - Tävling: vems spegel är skarpast?
+tags:
+  - Klubbteknik
+  - Parövningar
 ---

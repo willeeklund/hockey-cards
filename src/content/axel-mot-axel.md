@@ -8,4 +8,6 @@ tips:
   - Håll konstant tryck – ta inte bort axeln!
   - Sänk tyngdpunkten genom att böja knäna
   - Den som kliver av linjen förlorar
+tags:
+  - Parövningar
 ---

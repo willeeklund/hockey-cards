@@ -7,4 +7,7 @@ tips:
   - Håll bara den övre handen på klubban
   - Dribbla bollen fore- och bakhands fram och tillbaka
   - Byt hand och kör igen – vilken hand är svårast?
+tags:
+  - Klubbteknik
+  - Individuella
 ---

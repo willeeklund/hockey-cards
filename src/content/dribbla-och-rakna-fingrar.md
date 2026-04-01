@@ -8,4 +8,7 @@ tips:
   - När du ser antalet fingrar – ropa siffran!
   - Kompisen byter antal fingrar
   - Den som håller fingrar räknar antal byten
+tags:
+  - Klubbteknik
+  - Individuella
 ---
