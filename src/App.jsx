@@ -198,7 +198,7 @@ function App() {
                   />
                 ))}
               </div>
-              <div className="card-page card-back-page">
+              <div className="card-back-page">
                 <div className="card-back-grid">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <CardBack key={i} />
