@@ -1,5 +1,5 @@
 ---
-title: Biblioteket
+title: Tysta passningar
 emoji: 📚
 color: "#0369a1"
 syfte: Mjuk mottagning ger dig kontroll direkt – så du kan göra nästa drag snabbare
