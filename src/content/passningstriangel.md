@@ -1,7 +1,7 @@
 ---
 title: Passningstriangel
 emoji: 🔺
-color: "#a855f7"
+color: "#1e3a8a"
 syfte: Tränar passningsprecision och kommunikation – att spela med huvudet upp och hitta rätt mottagare är kärnan i lagspel
 tips:
   - Gå ihop tre personer och ställ er i en triangel

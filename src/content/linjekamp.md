@@ -1,7 +1,7 @@
 ---
 title: Linjekamp
 emoji: 🤼
-color: "#2563eb"
+color: "#a855f7"
 syfte: Träna balansen och värm upp kroppen – den som håller ställningen vinner!
 tips:
   - Stå 2 och 2 och gå längs en linje på golvet

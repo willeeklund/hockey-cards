@@ -1,7 +1,7 @@
 ---
 title: Knäböj
 emoji: 🦵
-color: "#00B4D8"
+color: "#10b981"
 syfte: Bygger starka ben – precis det man behöver för att åka fort!
 tips:
   - Fötterna axelbrett isär

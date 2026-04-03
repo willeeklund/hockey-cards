@@ -1,7 +1,7 @@
 ---
 title: Passa 2 bollar
 emoji: 🎯
-color: "#e11d48"
+color: "#1e40af"
 syfte: Träna blicken och timingen med din kompis – precis det du behöver för att bli en smartare spelare på isen!
 tips:
   - Stå mitt emot varandra och ha en boll var – båda bollarna ska röra sig hela tiden

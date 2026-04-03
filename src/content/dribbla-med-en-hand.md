@@ -1,7 +1,7 @@
 ---
 title: Dribbla med en hand
 emoji: ✋
-color: "#10b981"
+color: "#38bdf8"
 syfte: Stärker handleder och ger känsla för hur klubban styrs – mjuka händer på isen börjar här
 tips:
   - Håll bara den övre handen på klubban

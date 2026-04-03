@@ -1,7 +1,7 @@
 ---
 title: Flipp-macka
 emoji: 🥪
-color: "#f43f5e"
+color: "#1d4ed8"
 syfte: Lär dig lyfta pucken – öppnar nya passningsvägar och avslut som försvarare aldrig hinner blocka
 tips:
   - Stå mitt emot en kompis, ca 2–3 meter emellan
