@@ -6,8 +6,14 @@ WORKDIR /app
 COPY package*.json tsconfig*.json ./
 RUN npm ci
 COPY . .
+# Defensive: clear any TypeScript incremental-build cache that might have
+# slipped past .dockerignore. With `composite: true` in tsconfig.server.json,
+# a stale .tsbuildinfo will make tsc skip emitting dist/server/ entirely.
+RUN find . -name '*.tsbuildinfo' -not -path './node_modules/*' -delete
 # `npm run build` produces dist/client/ (Vite) and dist/server/ (tsc).
 RUN npm run build
+# Sanity check that both build outputs landed where Express expects them.
+RUN test -f dist/server/index.js && test -f dist/client/index.html
 
 # Build-time git info, served from /gitVersion.json by Express in production.
 # The Makefile passes the real values via --build-arg in `make manual-deploy`;
