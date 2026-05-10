@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseTagsFromMarkdown, upsertTagsInMarkdown } from './markdownTags.js'
+import { parseTagsFromMarkdown, upsertTagsInMarkdown } from './markdownTags'
 
 // ── parseTagsFromMarkdown ──────────────────────────────────────────────
 
