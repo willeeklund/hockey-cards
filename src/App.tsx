@@ -4,6 +4,7 @@ import CardBack from './components/CardBack'
 import CardEditModal from './components/CardEditModal'
 import SelectionBar from './components/SelectionBar'
 import TeamSelector from './components/TeamSelector'
+import TeamPicker from './components/TeamPicker'
 import { useTeam } from './context/TeamContext'
 import { FALLBACK_TEAM_ID } from './config/teams'
 import { parseCard } from './utils/parseCard'
@@ -66,6 +67,7 @@ function App() {
   // Display images fall back to the most-populated team when nothing has
   // been picked yet. Upload paths still require a real teamId.
   const displayTeamId = teamId ?? FALLBACK_TEAM_ID
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const cards = useMemo(() => {
     // First pass: parse + alphabetical-by-filename order.
@@ -171,7 +173,7 @@ function App() {
           <span className="toolbar-logo">🏒</span>
           <span className="toolbar-title">Hockey Övningskort</span>
 
-          <TeamSelector />
+          <TeamSelector onSwitch={() => setPickerOpen(true)} />
 
           {/* Tag filters */}
           <div className="tag-filters">
@@ -243,6 +245,14 @@ function App() {
           onTransformChange={next => updateTransform(editCard.id, next)}
           onClose={() => setEditId(null)}
         />
+      )}
+
+      {/* ── Team picker ──────────────────────────────────────────────────
+          Forced (no onClose) on first load, when nothing is selected yet.
+          Dismissible when the user opened it via the "Byt lag" button. */}
+      {teamId === null && <TeamPicker />}
+      {teamId !== null && pickerOpen && (
+        <TeamPicker onClose={() => setPickerOpen(false)} />
       )}
     </>
   )

@@ -1,45 +1,42 @@
-import { useTeam } from '../context/TeamContext';
-import './TeamSelector.css';
+import { useTeam } from '../context/TeamContext'
+import './TeamSelector.css'
 
-export default function TeamSelector() {
-  const { teamId, setTeamId, teams } = useTeam();
+type Props = {
+  onSwitch: () => void
+}
 
-  if (teams.length <= 1) {
+/**
+ * Toolbar pill that shows the current team and opens the big team-picker
+ * modal when clicked. Used to be a dropdown — switched to a button so the
+ * selection action is more prominent and goes through the same modal flow
+ * as first-time selection.
+ */
+export default function TeamSelector({ onSwitch }: Props) {
+  const { team, teamId } = useTeam()
+
+  if (!teamId) {
     return (
-      <span className="team-selector team-selector--single" title="Aktivt lag">
-        🏆 {teams[0]?.label ?? teamId ?? 'Inget lag'}
-      </span>
-    );
+      <button
+        type="button"
+        className="team-selector team-selector--placeholder"
+        onClick={onSwitch}
+      >
+        <span className="team-selector-icon" aria-hidden>🏆</span>
+        <span className="team-selector-name">Välj lag</span>
+      </button>
+    )
   }
 
-  const hasSelection = teamId !== null;
-
   return (
-    <label
-      className={`team-selector${hasSelection ? '' : ' team-selector--placeholder'}`}
-      title={hasSelection ? 'Byt lag' : 'Välj lag'}
+    <button
+      type="button"
+      className="team-selector"
+      onClick={onSwitch}
+      title="Byt lag"
     >
-      <span className="team-selector-icon" aria-hidden>
-        🏆
-      </span>
-      <select
-        className="team-selector-select"
-        value={teamId ?? ''}
-        onChange={(e) => {
-          if (e.target.value) setTeamId(e.target.value);
-        }}
-      >
-        {!hasSelection && (
-          <option value="" disabled>
-            Välj lag…
-          </option>
-        )}
-        {teams.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
+      <span className="team-selector-icon" aria-hidden>🏆</span>
+      <span className="team-selector-name">{team?.label ?? teamId}</span>
+      <span className="team-selector-action">Byt lag</span>
+    </button>
+  )
 }
