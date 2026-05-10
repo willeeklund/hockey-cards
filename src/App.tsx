@@ -10,7 +10,18 @@ import { parseCard } from './utils/parseCard'
 import './App.css'
 
 const rawFiles = import.meta.glob('./content/*.md', { query: '?raw', import: 'default', eager: true })
-const ALL_TAGS = ['Klubbteknik', 'Parövningar', 'Individuella', 'Rörlighet']
+// Tag list controls both the filter chips in the toolbar AND the card sort
+// order — cards are grouped by their first matching tag from this list, in
+// this order. Cards with none of these tags are placed at the end.
+const ALL_TAGS = ['Klubbteknik', 'Rörlighet', 'Parövningar', 'Individuella']
+
+function primaryTagIndex(card) {
+  const cardTags = card.tags || []
+  for (let i = 0; i < ALL_TAGS.length; i++) {
+    if (cardTags.includes(ALL_TAGS[i])) return i
+  }
+  return ALL_TAGS.length
+}
 
 // ── URL helpers ────────────────────────────────────────────────────────
 function readUrl() {
@@ -57,12 +68,16 @@ function App() {
   const displayTeamId = teamId ?? FALLBACK_TEAM_ID
 
   const cards = useMemo(() => {
-    return Object.entries(rawFiles)
+    // First pass: parse + alphabetical-by-filename order.
+    const parsed = Object.entries(rawFiles)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([filePath, raw]) => {
         const { id, data } = parseCard(raw, filePath)
         return { id, ...data }
       })
+    // Second pass: stable sort by primary tag — preserves the alphabetical
+    // order from above within each tag group.
+    return parsed.sort((a, b) => primaryTagIndex(a) - primaryTagIndex(b))
   }, [])
 
   // Initialise from URL
