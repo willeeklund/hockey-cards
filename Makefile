@@ -19,7 +19,9 @@ CONTAINER_APP    := ca-gota-off-ice-prod
 # pushed image is traceable. Also tag :latest — that's the reference in
 # tfvars, so no tofu drift after a manual deploy.
 GIT_SHA         := $(shell git rev-parse --short HEAD 2>/dev/null || echo manual)
+GIT_BRANCH      := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
 TIMESTAMP       := $(shell date -u +%Y%m%d%H%M%S)
+BUILD_TIME      := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 TAG             := $(GIT_SHA)
 REVISION_SUFFIX := $(GIT_SHA)-$(TIMESTAMP)
 
@@ -38,6 +40,9 @@ build-push:  ## docker buildx (linux/amd64) → push :$(TAG) and :latest
 	@echo "→ Building & pushing $(FULL_IMAGE) (also tagging :latest)"
 	docker buildx build \
 	  --platform linux/amd64 \
+	  --build-arg GIT_COMMIT=$(GIT_SHA) \
+	  --build-arg GIT_BRANCH=$(GIT_BRANCH) \
+	  --build-arg BUILD_TIME=$(BUILD_TIME) \
 	  -t $(FULL_IMAGE) \
 	  -t $(LATEST_IMAGE) \
 	  --push \

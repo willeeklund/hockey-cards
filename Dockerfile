@@ -6,9 +6,17 @@ WORKDIR /app
 COPY package*.json tsconfig*.json ./
 RUN npm ci
 COPY . .
-# `npm run build` runs both `vite build` (→ dist/) and `tsc -p
-# tsconfig.server.json` (→ dist-server/).
+# `npm run build` produces dist/client/ (Vite) and dist/server/ (tsc).
 RUN npm run build
+
+# Build-time git info, served from /gitVersion.json by Express in production.
+# The Makefile passes the real values via --build-arg in `make manual-deploy`;
+# unknown is the fallback when building locally without those args.
+ARG GIT_COMMIT=unknown
+ARG GIT_BRANCH=unknown
+ARG BUILD_TIME=unknown
+RUN printf '{\n  "commit": "%s",\n  "branch": "%s",\n  "buildTime": "%s"\n}\n' \
+    "$GIT_COMMIT" "$GIT_BRANCH" "$BUILD_TIME" > dist/client/gitVersion.json
 
 # --- Runtime stage: production deps + compiled server + built SPA ---
 FROM node:22-alpine
