@@ -22,3 +22,9 @@ override.tf.json
 
 # NOTE: .terraform.lock.hcl is intentionally NOT ignored — commit it so
 # provider versions are reproducible across machines and CI.
+
+# Auto-loaded tfvars files for injecting secret values (e.g. Basic-auth
+# credentials) without committing them. tofu auto-loads any *.auto.tfvars,
+# so this lets us keep them local-only.
+*.auto.tfvars
+*.auto.tfvars.json

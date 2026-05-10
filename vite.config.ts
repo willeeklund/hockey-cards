@@ -1,116 +1,128 @@
-import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
-import fs from 'fs'
-import path from 'path'
-import { upsertTagsInMarkdown } from './src/utils/markdownTags'
+import { defineConfig, type Connect } from 'vite';
+import react from '@vitejs/plugin-react';
+import fs from 'fs';
+import path from 'path';
+import { upsertTagsInMarkdown } from './src/utils/markdownTags';
+import { getStorage } from './src/server/storage/index.js';
 
-const port = 3000
+const port = 3000;
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
-  const teamFolder = env.IMAGES_FOLDER || 'ikgota-team16'
-  const imagesDir = path.join(process.cwd(), 'public', 'exercise_images', teamFolder)
+// Validation patterns shared with the production Express server.
+const TEAM_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/i;
+const IMAGE_FILENAME = /^[\w-]+\.(jpg|jpeg|png|webp|gif)$/i;
+const ID_PATTERN = /^[\w-]+$/;
 
-  const uploadPlugin = {
-    name: 'upload-middleware',
-    configureServer(server) {
-      fs.mkdirSync(imagesDir, { recursive: true })
+function readJsonBody(req: Connect.IncomingMessage): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
 
-      const contentDir = path.join(process.cwd(), 'src', 'content')
+function sendJson(res: any, status: number, payload: unknown) {
+  res.statusCode = status;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(payload));
+}
 
-      server.middlewares.use('/api/save-tags', (req, res) => {
-        res.setHeader('Content-Type', 'application/json')
+const apiPlugin = {
+  name: 'cards-dev-api',
+  configureServer(server: any) {
+    const contentDir = path.join(process.cwd(), 'src', 'content');
+    const storage = getStorage();
+
+    // POST /api/save-tags — dev-only, edits src/content/<id>.md
+    server.middlewares.use(
+      '/api/save-tags',
+      async (req: any, res: any) => {
         if (req.method !== 'POST') {
-          res.statusCode = 405; res.end(JSON.stringify({ error: 'Method not allowed' })); return
+          return sendJson(res, 405, { error: 'Method not allowed' });
         }
-        let body = ''
-        req.on('data', chunk => { body += chunk })
-        req.on('end', () => {
-          try {
-            const { id, tags } = JSON.parse(body)
-            if (!/^[\w-]+$/.test(id) || !Array.isArray(tags)) {
-              res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid payload' })); return
-            }
-            const filePath = path.join(contentDir, `${id}.md`)
-            if (!fs.existsSync(filePath)) {
-              res.statusCode = 404; res.end(JSON.stringify({ error: 'File not found' })); return
-            }
-            const raw = fs.readFileSync(filePath, 'utf8')
-            const updated = upsertTagsInMarkdown(raw, tags)
-            fs.writeFileSync(filePath, updated, 'utf8')
-            res.statusCode = 200; res.end(JSON.stringify({ ok: true }))
-          } catch (e) {
-            res.statusCode = 500; res.end(JSON.stringify({ error: e.message }))
+        try {
+          const { id, tags } = await readJsonBody(req);
+          if (typeof id !== 'string' || !ID_PATTERN.test(id) || !Array.isArray(tags)) {
+            return sendJson(res, 400, { error: 'Invalid payload' });
           }
-        })
-      })
-
-      server.middlewares.use('/api/save-crop', (req, res) => {
-        res.setHeader('Content-Type', 'application/json')
-        if (req.method !== 'POST') {
-          res.statusCode = 405; res.end(JSON.stringify({ error: 'Method not allowed' })); return
+          const filePath = path.join(contentDir, `${id}.md`);
+          if (!fs.existsSync(filePath)) {
+            return sendJson(res, 404, { error: 'File not found' });
+          }
+          const raw = fs.readFileSync(filePath, 'utf8');
+          fs.writeFileSync(filePath, upsertTagsInMarkdown(raw, tags), 'utf8');
+          sendJson(res, 200, { ok: true });
+        } catch (e: any) {
+          sendJson(res, 500, { error: e?.message ?? 'save-tags failed' });
         }
-        let body = ''
-        req.on('data', chunk => { body += chunk })
-        req.on('end', () => {
-          try {
-            const { id, crop } = JSON.parse(body)
-            if (!/^[\w-]+$/.test(id)) {
-              res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid id' })); return
-            }
-            fs.writeFileSync(path.join(imagesDir, `${id}.json`), JSON.stringify(crop, null, 2))
-            res.statusCode = 200; res.end(JSON.stringify({ ok: true }))
-          } catch (e) {
-            res.statusCode = 500; res.end(JSON.stringify({ error: e.message }))
-          }
-        })
-      })
+      },
+    );
 
-      server.middlewares.use('/api/upload', (req, res) => {
-        res.setHeader('Content-Type', 'application/json')
-
-        if (req.method !== 'POST') {
-          res.statusCode = 405
-          res.end(JSON.stringify({ error: 'Method not allowed' }))
-          return
+    // POST /api/save-crop — writes <team>/<id>.json via the storage backend
+    server.middlewares.use('/api/save-crop', async (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        return sendJson(res, 405, { error: 'Method not allowed' });
+      }
+      try {
+        const { team, id, crop } = await readJsonBody(req);
+        if (typeof team !== 'string' || !TEAM_PATTERN.test(team)) {
+          return sendJson(res, 400, { error: 'Invalid or missing team' });
         }
+        if (typeof id !== 'string' || !ID_PATTERN.test(id)) {
+          return sendJson(res, 400, { error: 'Invalid id' });
+        }
+        const buffer = Buffer.from(JSON.stringify(crop, null, 2), 'utf8');
+        await storage.save(team, `${id}.json`, buffer);
+        sendJson(res, 200, { ok: true });
+      } catch (e: any) {
+        sendJson(res, 500, { error: e?.message ?? 'save-crop failed' });
+      }
+    });
 
-        let body = ''
-        req.on('data', chunk => { body += chunk })
-        req.on('end', () => {
-          try {
-            const { filename, data } = JSON.parse(body)
+    // POST /api/upload — writes <team>/<filename> via the storage backend
+    server.middlewares.use('/api/upload', async (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        return sendJson(res, 405, { error: 'Method not allowed' });
+      }
+      try {
+        const { team, filename, data } = await readJsonBody(req);
+        if (typeof team !== 'string' || !TEAM_PATTERN.test(team)) {
+          return sendJson(res, 400, { error: 'Invalid or missing team' });
+        }
+        if (typeof filename !== 'string' || !IMAGE_FILENAME.test(filename)) {
+          return sendJson(res, 400, { error: 'Ogiltigt filnamn' });
+        }
+        const base64 = String(data).replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64, 'base64');
+        const result = await storage.save(team, filename, buffer);
+        sendJson(res, 200, { ok: true, ...result });
+      } catch (e: any) {
+        sendJson(res, 500, { error: e?.message ?? 'upload failed' });
+      }
+    });
+  },
+};
 
-            // Only allow safe filenames: letters, digits, dash, underscore + image extension
-            if (!/^[\w\-]+\.(jpg|jpeg|png|webp|gif)$/i.test(filename)) {
-              res.statusCode = 400
-              res.end(JSON.stringify({ error: 'Ogiltigt filnamn' }))
-              return
-            }
-
-            const base64Data = data.replace(/^data:image\/\w+;base64,/, '')
-            const buffer = Buffer.from(base64Data, 'base64')
-            fs.writeFileSync(path.join(imagesDir, filename), buffer)
-
-            res.statusCode = 200
-            res.end(JSON.stringify({ ok: true, path: `/exercise_images/${teamFolder}/${filename}` }))
-          } catch (e) {
-            res.statusCode = 500
-            res.end(JSON.stringify({ error: e.message }))
-          }
-        })
-      })
-    },
-  }
-
-  return {
-    plugins: [react(), uploadPlugin],
-    define: {
-      'import.meta.env.IMAGES_FOLDER': JSON.stringify(teamFolder),
-    },
-    server: {
-      host: true,
-      port,
-    },
-  }
-})
+export default defineConfig({
+  plugins: [react(), apiPlugin],
+  build: {
+    // Frontend bundle lives in dist/client/. The server build (tsc -p
+    // tsconfig.server.json) puts its output in dist/server/. Keeping them
+    // in distinct subdirectories means express.static('dist/client') can
+    // never accidentally expose the compiled server code.
+    outDir: 'dist/client',
+    emptyOutDir: true,
+  },
+  server: {
+    host: true,
+    port,
+  },
+});

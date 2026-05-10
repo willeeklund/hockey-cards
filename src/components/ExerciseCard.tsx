@@ -1,20 +1,29 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useTeam } from '../context/TeamContext'
+import { FALLBACK_TEAM_ID } from '../config/teams'
 import './ExerciseCard.css'
 
 const FALLBACK_COLORS = ['#FF6B35', '#00B4D8', '#9B5DE5', '#F15BB5']
-const TEAM_FOLDER = import.meta.env.IMAGES_FOLDER || 'ikgota-team16'
 
 function isEdited(xform) {
   return Math.abs(xform.x) > 0.001 || Math.abs(xform.y) > 0.001 || Math.abs(xform.scale - 1) > 0.001
 }
 
 export default function ExerciseCard({ card, index = 0, transform = { x: 0, y: 0, scale: 1 }, onEdit }) {
+  const { teamId } = useTeam()
   const [imgError, setImgError] = useState(false)
 
   const color = card.color || FALLBACK_COLORS[index % FALLBACK_COLORS.length]
-  const imageSrc = `/exercise_images/${TEAM_FOLDER}/${card.id}.jpg`
+  const imageSrc = `/exercise_images/${teamId ?? FALLBACK_TEAM_ID}/${card.id}.jpg`
   const hasImage = !imgError
   const edited = isEdited(transform)
+
+  // Reset the error flag whenever the image URL changes (e.g. user switched
+  // teams) so the new team's image gets a fresh chance to load instead of
+  // inheriting the previous team's "missing image" state.
+  useEffect(() => {
+    setImgError(false)
+  }, [imageSrc])
 
   return (
     <article className="exercise-card" style={{ '--card-color': color }}>

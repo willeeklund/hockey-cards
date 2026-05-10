@@ -1,6 +1,5 @@
 node_modules
 dist
-dist-server
 dist-ssr
 .git
 .github

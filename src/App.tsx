@@ -3,11 +3,13 @@ import ExerciseCard from './components/ExerciseCard'
 import CardBack from './components/CardBack'
 import CardEditModal from './components/CardEditModal'
 import SelectionBar from './components/SelectionBar'
+import TeamSelector from './components/TeamSelector'
+import { useTeam } from './context/TeamContext'
+import { FALLBACK_TEAM_ID } from './config/teams'
 import { parseCard } from './utils/parseCard'
 import './App.css'
 
 const rawFiles = import.meta.glob('./content/*.md', { query: '?raw', import: 'default', eager: true })
-const TEAM_FOLDER = import.meta.env.IMAGES_FOLDER || 'ikgota-team16'
 const ALL_TAGS = ['Klubbteknik', 'Parövningar', 'Individuella', 'Rörlighet']
 
 // ── URL helpers ────────────────────────────────────────────────────────
@@ -49,6 +51,11 @@ function saveLocalCrop(id, crop) {
 
 // ── App ────────────────────────────────────────────────────────────────
 function App() {
+  const { teamId } = useTeam()
+  // Display images fall back to the most-populated team when nothing has
+  // been picked yet. Upload paths still require a real teamId.
+  const displayTeamId = teamId ?? FALLBACK_TEAM_ID
+
   const cards = useMemo(() => {
     return Object.entries(rawFiles)
       .sort(([a], [b]) => a.localeCompare(b))
@@ -83,28 +90,29 @@ function App() {
     writeUrl(selectedIds, cards, editId, activeTags)
   }, [selectedIds, editId, activeTags, cards])
 
-  // Load saved crops from server (background fetch for cards without local data)
+  // Load saved crops from server for the active (or fallback) team.
   useEffect(() => {
-    const missing = cards.filter(c => !transforms[c.id])
-    if (missing.length === 0) return
+    let cancelled = false
     Promise.all(
-      missing.map(c =>
-        fetch(`/exercise_images/${TEAM_FOLDER}/${c.id}.json`)
+      cards.map(c =>
+        fetch(`/exercise_images/${displayTeamId}/${c.id}.json`)
           .then(r => r.ok ? r.json().then(crop => ({ id: c.id, crop })) : null)
           .catch(() => null)
       )
     ).then(results => {
+      if (cancelled) return
       const updates = {}
       results.forEach(r => { if (r) updates[r.id] = r.crop })
       if (Object.keys(updates).length > 0) {
         setTransforms(t => {
           const merged = { ...t }
-          Object.entries(updates).forEach(([id, crop]) => { if (!merged[id]) merged[id] = crop })
+          Object.entries(updates).forEach(([id, crop]) => { merged[id] = crop })
           return merged
         })
       }
     })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    return () => { cancelled = true }
+  }, [cards, displayTeamId])
 
   const updateTransform = useCallback((cardId, next) => {
     setTransforms(t => ({ ...t, [cardId]: next }))
@@ -147,6 +155,8 @@ function App() {
         <div className="toolbar-inner">
           <span className="toolbar-logo">🏒</span>
           <span className="toolbar-title">Hockey Övningskort</span>
+
+          <TeamSelector />
 
           {/* Tag filters */}
           <div className="tag-filters">

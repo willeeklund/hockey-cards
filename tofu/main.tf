@@ -168,6 +168,26 @@ resource "azurerm_key_vault_secret" "storage_key" {
   depends_on = [time_sleep.wait_for_kv_rbac]
 }
 
+# Basic auth credentials come from `var.basic_auth_user` / `var.basic_auth_password`
+# (both sensitive), supplied via a gitignored `*.auto.tfvars` file — no secret
+# values in this repo. Both are mirrored into Key Vault and surfaced to the
+# Container App via `secret_name` env references.
+resource "azurerm_key_vault_secret" "basic_auth_username" {
+  name         = "basic-auth-username"
+  value        = var.basic_auth_user
+  key_vault_id = azurerm_key_vault.this.id
+
+  depends_on = [time_sleep.wait_for_kv_rbac]
+}
+
+resource "azurerm_key_vault_secret" "basic_auth_password" {
+  name         = "basic-auth-password"
+  value        = var.basic_auth_password
+  key_vault_id = azurerm_key_vault.this.id
+
+  depends_on = [time_sleep.wait_for_kv_rbac]
+}
+
 # var.app_secrets is sensitive, so for_each can't iterate it directly.
 # Pull keys with nonsensitive() and look up values via indexing.
 resource "azurerm_key_vault_secret" "app_secrets" {
@@ -210,6 +230,18 @@ resource "azurerm_container_app" "this" {
     }
   }
 
+  secret {
+    name                = "basic-auth-username"
+    key_vault_secret_id = azurerm_key_vault_secret.basic_auth_username.versionless_id
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "basic-auth-password"
+    key_vault_secret_id = azurerm_key_vault_secret.basic_auth_password.versionless_id
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
   ingress {
     external_enabled = true
     target_port      = var.target_port
@@ -250,6 +282,18 @@ resource "azurerm_container_app" "this" {
       env {
         name  = "AZURE_CLIENT_ID"
         value = azurerm_user_assigned_identity.app.client_id
+      }
+      env {
+        name  = "STORAGE_BACKEND"
+        value = "blob"
+      }
+      env {
+        name        = "BASIC_AUTH_USER"
+        secret_name = "basic-auth-username"
+      }
+      env {
+        name        = "BASIC_AUTH_PASSWORD"
+        secret_name = "basic-auth-password"
       }
 
       dynamic "env" {

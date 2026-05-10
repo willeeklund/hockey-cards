@@ -1,34 +1,113 @@
-import express, { type Request, type Response } from 'express';
+import express, {
+  type NextFunction,
+  type Request,
+  type Response,
+} from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { basicAuth } from './auth.js';
+import { getStorage, mimeFromName } from './storage/index.js';
 
-// Resolve paths relative to the compiled file at runtime.
-// Compiled output lives at <app>/dist-server/index.js, so the Vite build at
-// <app>/dist/ is one level up.
+// Compiled output lives at <app>/dist/server/index.js. The Vite build is
+// the sibling at <app>/dist/client/.
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const distDir = join(__dirname, '..', 'dist');
+const distDir = join(__dirname, '..', 'client');
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
+const storage = getStorage();
 
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok' });
+// ── Health (unauthenticated, mounted before auth) ────────────────────
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', storage: storage.backend });
 });
 
-// Future API routes go here — e.g. POST /api/uploads to push images into
-// the Azure blob container. Use `@azure/storage-blob` +
-// `@azure/identity`'s DefaultAzureCredential so the managed identity that
-// Container Apps injects authenticates automatically (the tofu config
-// grants it Storage Blob Data Contributor on the storage account).
+// ── Basic auth — applies to everything below ─────────────────────────
+app.use(basicAuth());
 
-app.use(express.static(distDir));
+// JSON bodies up to 10 MiB (image uploads come in as base64 data URLs).
+app.use(express.json({ limit: '10mb' }));
 
-// SPA fallback: any unknown path serves the built index.html so the
-// client-side router can handle it.
+// ── API: upload image ────────────────────────────────────────────────
+const TEAM_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/i;
+const IMAGE_FILENAME = /^[\w-]+\.(jpg|jpeg|png|webp|gif)$/i;
+const META_FILENAME = /^[\w-]+\.json$/i;
+
+app.post('/api/upload', async (req: Request, res: Response) => {
+  try {
+    const { team, filename, data } = req.body ?? {};
+    if (typeof team !== 'string' || !TEAM_PATTERN.test(team)) {
+      return res.status(400).json({ error: 'Invalid or missing team' });
+    }
+    if (typeof filename !== 'string' || !IMAGE_FILENAME.test(filename)) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+    if (typeof data !== 'string') {
+      return res.status(400).json({ error: 'Missing data' });
+    }
+    const base64 = data.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64, 'base64');
+    const result = await storage.save(team, filename, buffer);
+    res.json({ ok: true, ...result });
+  } catch (e: any) {
+    console.error('upload error', e);
+    res.status(500).json({ error: e?.message ?? 'upload failed' });
+  }
+});
+
+// ── API: save crop metadata JSON ─────────────────────────────────────
+app.post('/api/save-crop', async (req: Request, res: Response) => {
+  try {
+    const { team, id, crop } = req.body ?? {};
+    if (typeof team !== 'string' || !TEAM_PATTERN.test(team)) {
+      return res.status(400).json({ error: 'Invalid or missing team' });
+    }
+    if (typeof id !== 'string' || !/^[\w-]+$/.test(id)) {
+      return res.status(400).json({ error: 'Invalid id' });
+    }
+    const buffer = Buffer.from(JSON.stringify(crop, null, 2), 'utf8');
+    await storage.save(team, `${id}.json`, buffer);
+    res.json({ ok: true });
+  } catch (e: any) {
+    console.error('save-crop error', e);
+    res.status(500).json({ error: e?.message ?? 'save-crop failed' });
+  }
+});
+
+// ── Bundled static SPA + previously-committed exercise images ────────
+// `express.static` falls through to the next middleware when a file isn't
+// found, so missing images get a chance to be served from the storage
+// backend below.
+app.use(express.static(distDir, { fallthrough: true }));
+
+// ── Serve uploaded images from the storage backend ───────────────────
+app.get(
+  '/exercise_images/:team/:filename',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { team, filename } = req.params;
+      if (!TEAM_PATTERN.test(team)) return next();
+      if (!IMAGE_FILENAME.test(filename) && !META_FILENAME.test(filename)) {
+        return next();
+      }
+      const buffer = await storage.read(team, filename);
+      if (!buffer) return next();
+      res.setHeader('Content-Type', mimeFromName(filename));
+      res.setHeader('Cache-Control', 'public, max-age=60');
+      res.send(buffer);
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
+// ── SPA fallback ─────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {
   res.sendFile(join(distDir, 'index.html'));
 });
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`cards server listening on :${port}`);
+  console.log(
+    `cards server listening on :${port} (storage=${storage.backend})`,
+  );
 });

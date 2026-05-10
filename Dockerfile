@@ -18,9 +18,8 @@ COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/dist-server ./dist-server
 
 USER node
 EXPOSE 3000
 
-CMD ["node", "dist-server/index.js"]
+CMD ["node", "dist/server/index.js"]

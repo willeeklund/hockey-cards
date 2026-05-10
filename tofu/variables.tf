@@ -62,6 +62,18 @@ variable "env_vars" {
   default = []
 }
 
+variable "basic_auth_user" {
+  description = "HTTP Basic auth username used by the Container App. Set in a gitignored `*.auto.tfvars` file (e.g. `secrets.auto.tfvars`) so the value never lands in the public repo."
+  type        = string
+  sensitive   = true
+}
+
+variable "basic_auth_password" {
+  description = "HTTP Basic auth password — stored in Key Vault as `basic-auth-password` and exposed to the Container App as the `BASIC_AUTH_PASSWORD` env var. Set in a gitignored `*.auto.tfvars` file so the value never lands in the public repo."
+  type        = string
+  sensitive   = true
+}
+
 variable "tags" {
   description = "Tags applied to every resource."
   type        = map(string)

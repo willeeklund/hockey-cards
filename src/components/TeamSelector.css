@@ -1,0 +1,44 @@
+.team-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.team-selector--single {
+  cursor: default;
+}
+
+.team-selector-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.team-selector-select {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding-right: 0.2rem;
+}
+
+.team-selector-select:focus {
+  outline: none;
+}
+
+.team-selector-select option {
+  color: #222;
+  background: #fff;
+}
+
+.team-selector--placeholder {
+  background: rgba(255, 165, 0, 0.18);
+  outline: 1px dashed rgba(255, 165, 0, 0.7);
+}

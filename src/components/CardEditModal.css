@@ -227,3 +227,73 @@
   color: #fff;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
+
+/* ── Inline team picker shown in place of the upload button when the
+   user hasn't picked a team yet ────────────────────────────────────── */
+.modal-upload-pick-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-upload-pick-label {
+  white-space: nowrap;
+}
+
+.modal-upload-pick-select {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.modal-upload-pick-select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+
+/* ── Save row: status hint on the left, single Save action on the right ── */
+.modal-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.modal-save-status {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.modal-save-hint {
+  display: inline-block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.modal-save-hint--muted {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.modal-save-hint--error {
+  color: #b91c1c;
+}
+
+.modal-btn--save {
+  min-width: 9rem;
+}

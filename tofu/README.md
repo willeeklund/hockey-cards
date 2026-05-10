@@ -20,6 +20,29 @@ tofu apply -var-file=envs/prod.tfvars
 
 State is local (`tofu/terraform.tfstate`).
 
+## Basic auth credentials
+
+Username and password come from `secrets.auto.tfvars`, which is **gitignored**
+— no secret values land in this public repo. Anyone running `tofu apply` must
+have their own local copy of that file:
+
+```hcl
+# tofu/secrets.auto.tfvars  (NOT committed)
+basic_auth_user     = "..."
+basic_auth_password = "..."
+```
+
+Both values are mirrored into Key Vault as secrets `basic-auth-username` and
+`basic-auth-password`, and surfaced to the Container App via `secret_name`
+env references. Verify the deployed values any time with:
+
+```bash
+az keyvault secret show --vault-name kv-gota-off-ice-prod \
+  --name basic-auth-username --query value -o tsv
+az keyvault secret show --vault-name kv-gota-off-ice-prod \
+  --name basic-auth-password --query value -o tsv
+```
+
 ## Redeploying app code
 
 Use the Makefile at the repo root — not tofu:
