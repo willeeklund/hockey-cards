@@ -1,0 +1,24 @@
+# OpenTofu / Terraform
+
+# Local provider/module cache — large, machine-specific
+**/.terraform/
+
+# State files — contain secrets and machine state
+*.tfstate
+*.tfstate.*
+
+# Saved plans — can contain sensitive variable values
+*.tfplan
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Local override files — for ad-hoc local customizations, never committed
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# NOTE: .terraform.lock.hcl is intentionally NOT ignored — commit it so
+# provider versions are reproducible across machines and CI.
