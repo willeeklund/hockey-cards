@@ -312,19 +312,18 @@ app.put('/api/content/:id', async (req: Request, res: Response) => {
   }
 });
 
-// ── Bundled static SPA + previously-committed exercise images ────────
-// `express.static` falls through to the next middleware when a file isn't
-// found, so missing images / content get a chance to be served from the
-// storage backend below.
-app.use(express.static(distDir, { fallthrough: true }));
-
 // ── Serve uploaded images from the storage backend ───────────────────
+// The storage backend is the source of truth for images and content the
+// user can edit at runtime — bundled copies are only a fallback for files
+// that nobody has touched yet. So storage-backed routes go BEFORE
+// `express.static`, otherwise edits would be permanently shadowed by the
+// version baked into the image at build time.
 /**
  * @openapi
  * /exercise_images/{team}/{filename}:
  *   get:
  *     summary: Serve an uploaded exercise image or crop JSON
- *     description: Falls through static file serving first (so committed assets win), then reads from the storage backend (blob in prod).
+ *     description: Reads from the storage backend (blob in prod) first; falls through to bundled static files if nothing is in storage.
  *     parameters:
  *       - name: team
  *         in: path
@@ -372,7 +371,7 @@ app.get(
  * /content/{filename}:
  *   get:
  *     summary: Fetch an exercise markdown file
- *     description: Falls through static file serving first; otherwise reads `public/content/<filename>` from the storage backend. Cache-Control no-store, so edits show up on the next request.
+ *     description: Reads `public/content/<filename>` from the storage backend (blob in prod) first; falls through to bundled static files if nothing is in storage. Cache-Control no-store, so edits show up on the next request.
  *     parameters:
  *       - name: filename
  *         in: path
@@ -406,6 +405,12 @@ app.get(
     }
   },
 );
+
+// ── Bundled static SPA + previously-committed exercise images ────────
+// Runs AFTER the storage-backed routes above so that edited blobs always
+// win over the bundled copy. `fallthrough: true` lets non-matching
+// requests reach the SPA fallback below.
+app.use(express.static(distDir, { fallthrough: true }));
 
 // ── SPA fallback ─────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {
