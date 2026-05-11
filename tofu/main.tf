@@ -9,8 +9,9 @@
 #   - Storage Account + private blob container
 #   - Managed Identity (used by the Container App for ACR / KV / Storage access)
 #   - Container App
-#
-# Custom domain / DNS will be added in a later step.
+#   - Application Insights (workspace-based)
+#   - Optional: custom domain binding + managed cert (when `custom_domain_name`
+#     is set in tfvars)
 #
 # No external modules, no shared remote state. State is local by default —
 # see tofu/README.md for migrating to a remote backend in the same subscription.
@@ -355,3 +356,51 @@ resource "azurerm_container_app" "this" {
   ]
 }
 
+
+# ---------------------------------------------------------------------------
+# Custom domain (optional)
+# ---------------------------------------------------------------------------
+#
+# Only created when `custom_domain_name` is set in tfvars. Requires the
+# CNAME and asuid TXT records to already exist at the domain registrar —
+# Azure validates the CNAME during the binding step, so the apply fails if
+# DNS isn't in place yet. After binding succeeds, the null_resource below
+# asks Azure for a free managed certificate (Let's Encrypt under the hood)
+# and binds it to the hostname so HTTPS works automatically.
+
+resource "azurerm_container_app_custom_domain" "app" {
+  count = var.custom_domain_name != null ? 1 : 0
+
+  name                     = var.custom_domain_name
+  container_app_id         = azurerm_container_app.this.id
+  certificate_binding_type = "Disabled"
+
+  lifecycle {
+    # The az-CLI bind step below flips this to SniEnabled and sets the
+    # managed-cert id; we ignore it so re-applies don't unbind the cert.
+    ignore_changes = [certificate_binding_type]
+  }
+}
+
+resource "null_resource" "bind_managed_certificate" {
+  count = var.custom_domain_name != null ? 1 : 0
+
+  # Re-runs only when the custom-domain binding identity changes, e.g.
+  # if the hostname itself is changed. Cert renewals are handled by Azure.
+  triggers = {
+    custom_domain_id = azurerm_container_app_custom_domain.app[0].id
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      az containerapp hostname bind \
+        --hostname ${var.custom_domain_name} \
+        --name ${azurerm_container_app.this.name} \
+        --resource-group ${azurerm_resource_group.this.name} \
+        --environment ${azurerm_container_app_environment.this.id} \
+        --validation-method CNAME
+    EOT
+  }
+
+  depends_on = [azurerm_container_app_custom_domain.app]
+}

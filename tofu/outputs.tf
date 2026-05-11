@@ -18,6 +18,11 @@ output "container_app_fqdn" {
   value       = azurerm_container_app.this.ingress[0].fqdn
 }
 
+output "custom_domain_verification_id" {
+  description = "Value to put in the asuid.<subdomain> TXT record at your DNS provider so Azure can verify domain ownership when binding the custom domain."
+  value       = azurerm_container_app_environment.this.custom_domain_verification_id
+}
+
 output "acr_name" {
   description = "Name of the Azure Container Registry."
   value       = azurerm_container_registry.this.name

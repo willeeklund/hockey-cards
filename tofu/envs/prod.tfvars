@@ -20,6 +20,7 @@ min_replicas = 0
 max_replicas = 1
 
 # Custom domain / DNS will be added in a later step.
+custom_domain_name = "gota-off-ice.wilhelmeklund.com"
 
 tags = {
   Environment = "prod"

@@ -62,6 +62,12 @@ variable "env_vars" {
   default = []
 }
 
+variable "custom_domain_name" {
+  description = "Optional custom domain bound to the Container App (e.g. 'gota-off-ice.wilhelmeklund.com'). Leave null until the CNAME and asuid TXT records are in place at the domain registrar — see outputs `container_app_fqdn` and `custom_domain_verification_id`."
+  type        = string
+  default     = null
+}
+
 variable "basic_auth_user" {
   description = "HTTP Basic auth username used by the Container App. Set in a gitignored `*.auto.tfvars` file (e.g. `secrets.auto.tfvars`) so the value never lands in the public repo."
   type        = string
