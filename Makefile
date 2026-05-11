@@ -9,11 +9,14 @@
 # `az acr login` to authenticate Docker against the ACR — no extra creds.
 # ──────────────────────────────────────────────────────────────────────
 
-ACR_NAME         := crwilleeklund
-ACR_LOGIN_SERVER := $(ACR_NAME).azurecr.io
-IMAGE_NAME       := gota-off-ice
-RESOURCE_GROUP   := rg-gota-off-ice-prod
-CONTAINER_APP    := ca-gota-off-ice-prod
+ACR_NAME          := crwilleeklund
+ACR_LOGIN_SERVER  := $(ACR_NAME).azurecr.io
+IMAGE_NAME        := gota-off-ice
+RESOURCE_GROUP    := rg-gota-off-ice-prod
+CONTAINER_APP     := ca-gota-off-ice-prod
+STORAGE_ACCOUNT   := stgotaofficeprod
+STORAGE_CONTAINER := files
+KEY_VAULT         := kv-gota-off-ice-prod
 
 # Tag with the short git SHA (or "manual" outside a git checkout) so each
 # pushed image is traceable. Also tag :latest — that's the reference in
@@ -28,7 +31,7 @@ REVISION_SUFFIX := $(GIT_SHA)-$(TIMESTAMP)
 FULL_IMAGE   := $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(TAG)
 LATEST_IMAGE := $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest
 
-.PHONY: manual-deploy acr-login build-push update-container-app url logs help
+.PHONY: manual-deploy acr-login build-push update-container-app pull-images url logs help
 
 manual-deploy: acr-login build-push update-container-app  ## Full pipeline: log in → build & push → roll new revision
 
@@ -62,6 +65,20 @@ update-container-app:  ## Roll a new revision (suffix = git-sha + timestamp)
 	  --resource-group $(RESOURCE_GROUP) \
 	  --query "[?properties.active].{name:name, replicas:properties.replicas, trafficWeight:properties.trafficWeight}" \
 	  --output table
+
+BLOB_PREFIX := public/exercise_images
+PULL_PATTERN := $(if $(TEAM),$(BLOB_PREFIX)/$(TEAM)/*,$(BLOB_PREFIX)/*)
+
+pull-images:  ## Pull uploaded images from blob storage → public/exercise_images/ (optional: TEAM=<id> to limit to one team)
+	@echo "→ Downloading blobs matching '$(PULL_PATTERN)' from $(STORAGE_ACCOUNT)/$(STORAGE_CONTAINER)"
+	@az storage blob download-batch \
+	  --account-name $(STORAGE_ACCOUNT) \
+	  --account-key "$$(az keyvault secret show --vault-name $(KEY_VAULT) --name storage-account-key --query value -o tsv)" \
+	  --source $(STORAGE_CONTAINER) \
+	  --destination . \
+	  --pattern '$(PULL_PATTERN)' \
+	  --output none
+	@echo "→ Done. Run 'git status public/exercise_images/' to see what's new or changed and pick what to commit."
 
 url:  ## Print the public Container App URL
 	@az containerapp show \
