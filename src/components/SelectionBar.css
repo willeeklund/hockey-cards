@@ -112,3 +112,13 @@
   opacity: 0.25;
   cursor: default;
 }
+
+/* On mobile the per-card chip selector takes a lot of vertical space and
+   isn't actionable — you can't really print from a phone anyway. Hide
+   it; the active filter (and the snap-on-filter-change) still controls
+   what's "selected" if the user later loads the page on a real screen. */
+@media (max-width: 600px) {
+  .selection-bar {
+    display: none;
+  }
+}

@@ -277,7 +277,7 @@ function App() {
       <div className="toolbar no-print">
         <div className="toolbar-inner">
           <span className="toolbar-logo">🏒</span>
-          <span className="toolbar-title">Hockey Off-ice övningskort</span>
+          <span className="toolbar-title">IK Göta Off-ice övningskort</span>
 
           <TeamSelector onSwitch={() => setPickerOpen(true)} />
 
@@ -288,15 +288,19 @@ function App() {
             onClick={() => setNewExerciseOpen(true)}
             title="Skapa en ny övning"
           >
-            ✨ Ny övning
+            <span className="btn-icon" aria-hidden>✨</span>
+            <span className="btn-label">Ny övning</span>
           </button>
 
           <button
             className="print-btn"
             onClick={() => window.print()}
             disabled={selectedIds.size === 0}
+            title="Skriv ut valda kort"
           >
-            🖨️ Skriv ut {selectedIds.size > 0 && `(${selectedIds.size})`}
+            <span className="btn-icon" aria-hidden>🖨️</span>
+            <span className="btn-label">Skriv ut</span>
+            {selectedIds.size > 0 && <span className="btn-count">({selectedIds.size})</span>}
           </button>
         </div>
       </div>

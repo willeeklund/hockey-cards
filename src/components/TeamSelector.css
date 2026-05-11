@@ -66,3 +66,26 @@
   background: #fcd34d;
   border-color: #d97706;
 }
+
+@media (max-width: 600px) {
+  .team-selector {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    gap: 0.35rem;
+  }
+
+  /* Hide the "· Byt lag" suffix — the click affordance is implicit on
+     such a compact button, and we save horizontal space. */
+  .team-selector-action {
+    display: none;
+  }
+
+  /* The selected team can be long ("IK Göta — Team F12-F10") — cap and
+     ellipsis so it doesn't blow past the toolbar. */
+  .team-selector-name {
+    max-width: 11rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

@@ -64,3 +64,38 @@
   background: #1e40af;
   color: #fff;
 }
+
+@media (max-width: 600px) {
+  .filter-bar {
+    padding: 8px 12px;
+  }
+
+  .filter-bar-inner {
+    gap: 0.5rem;
+  }
+
+  .filter-bar-label {
+    /* The chip groups are self-explanatory at iPhone size — saving the
+       header keeps the row short enough to fit. */
+    display: none;
+  }
+
+  .filter-bar-groups {
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  /* Each segmented control takes the full row so they stack vertically
+     instead of running off-screen. */
+  .filter-bar-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filter-bar-group-btn {
+    flex: 1;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+}

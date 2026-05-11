@@ -259,3 +259,89 @@
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.7);
 }
+
+/* ── Button icon / label spans (used by new-exercise + print buttons) ── */
+.btn-icon { display: inline-flex; }
+.btn-label { display: inline; }
+.btn-count {
+  font-weight: 800;
+  margin-left: 0.15rem;
+}
+
+/* ── Mobile / iPhone-sized screens ──────────────────────────────────── */
+@media (max-width: 600px) {
+  .toolbar {
+    padding: 10px 12px;
+  }
+
+  .toolbar-inner {
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .toolbar-logo {
+    font-size: 1.3rem;
+  }
+
+  .toolbar-title {
+    font-size: 0.95rem;
+    /* The title still gets a row to itself when the toolbar wraps; team
+       selector + action buttons end up on the next row. */
+  }
+
+  /* The spacer pushes Ny övning + Skriv ut to the right edge; on really
+     narrow screens we drop it so the cluster just wraps naturally. */
+  .toolbar-spacer {
+    display: none;
+  }
+
+  .new-exercise-toolbar-btn,
+  .print-btn {
+    padding: 6px 11px;
+    font-size: 0.82rem;
+  }
+
+  /* Hide the verbose label on really small screens — title attributes
+     keep the meaning accessible on long-press. */
+  .new-exercise-toolbar-btn .btn-label,
+  .print-btn .btn-label {
+    display: none;
+  }
+}
+
+/* Tighten chip-list padding so the cards section has more breathing room. */
+@media (max-width: 600px) {
+  .pages {
+    padding: 16px 8px;
+    gap: 16px;
+  }
+}
+
+/* On mobile, dissolve the print-page layout — show every selected card
+   edge-to-edge in a single column. The page-pair grouping and "paper"
+   styling disappear so it reads as one continuous list, and cards take
+   up the full screen width rather than getting capped with awkward
+   side gutters. */
+@media (max-width: 600px) {
+  .card-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 14px;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 0;
+    width: 100%;
+  }
+
+  .page-pair {
+    width: 100%;
+    gap: 0;
+  }
+
+  .pages {
+    gap: 14px;
+    padding: 14px 0;
+  }
+}

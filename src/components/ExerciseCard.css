@@ -215,3 +215,11 @@
   .tips-list { gap: 2pt; }
   .tips-list li { font-size: 8pt; line-height: 1.38; padding-left: 11pt; }
 }
+
+/* On mobile we stack cards vertically and let each one fill the screen
+   width — the 260px print-size is just for the A4 grid layout. */
+@media (max-width: 600px) {
+  .exercise-card {
+    width: 100%;
+  }
+}
