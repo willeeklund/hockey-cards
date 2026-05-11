@@ -11,4 +11,5 @@ tips:
 tags:
   - Individuella
   - Rörlighet
+  - Med redskap
 ---

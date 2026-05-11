@@ -11,4 +11,5 @@ tips:
 tags:
   - Parövningar
   - Rörlighet
+  - Litet utrymme
 ---

@@ -13,13 +13,19 @@ import { parseCard } from './utils/parseCard'
 import './App.css'
 
 // Filter dimensions, each one a mutually-exclusive group: a card is either
-// klubbteknik OR rörlighet (never both), and either parövning OR
-// individuell. Picking one option in a group deselects the other.
-// The flat list (TAG_GROUPS.flat()) also controls card sort order — cards
-// are grouped by their first matching tag from this list, in this order.
+// klubbteknik OR rörlighet (never both), either parövning OR individuell,
+// and either litet-utrymme OR kräver-redskap. Picking one option in a
+// group deselects the other.
+//
+// The first two groups are exhaustive — every card has one of each. The
+// third (space/equipment) is optional; cards that need open floor but no
+// equipment can stay untagged in that group and show up in either filter.
+//
+// The flat list (TAG_GROUPS.flat()) also controls card sort order.
 const TAG_GROUPS = [
   ['Klubbteknik', 'Rörlighet'],
   ['Parövningar', 'Individuella'],
+  ['Litet utrymme', 'Med redskap'],
 ] as const
 const ALL_TAGS = TAG_GROUPS.flat()
 

@@ -4,11 +4,13 @@ import './ExerciseFormFields.css'
 
 // Same mutually-exclusive groups as the FilterBar — Klubbteknik vs Rörlighet
 // is one axis (klubbteknik = a card with a stick, rörlighet = bodyweight);
-// Parövningar vs Individuella is the other (paired vs solo). A card can't
-// be both within an axis, so we render each group as a segmented control.
+// Parövningar vs Individuella is the other (paired vs solo); Litet utrymme
+// vs Med redskap is the third (fits in a locker room / needs equipment).
+// Render each as a segmented control.
 const TAG_GROUPS = [
   ['Klubbteknik', 'Rörlighet'],
   ['Parövningar', 'Individuella'],
+  ['Litet utrymme', 'Med redskap'],
 ] as const
 
 const MAX_TIPS = 4

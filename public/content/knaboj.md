@@ -10,4 +10,5 @@ tips:
 tags:
   - Individuella
   - Rörlighet
+  - Litet utrymme
 ---
