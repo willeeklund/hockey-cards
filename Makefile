@@ -27,8 +27,6 @@ TIMESTAMP       := $(shell date -u +%Y%m%d%H%M%S)
 BUILD_TIME      := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 TAG             := $(GIT_SHA)
 REVISION_SUFFIX := $(GIT_SHA)-$(TIMESTAMP)
-
-FULL_IMAGE   := $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(TAG)
 LATEST_IMAGE := $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest
 
 .PHONY: manual-deploy acr-login build-push update-container-app pull-content url logs help
@@ -40,13 +38,12 @@ acr-login:  ## az acr login to $(ACR_NAME)
 	az acr login --name $(ACR_NAME)
 
 build-push:  ## docker buildx (linux/amd64) → push :$(TAG) and :latest
-	@echo "→ Building & pushing $(FULL_IMAGE) (also tagging :latest)"
+	@echo "→ Building & pushing $(LATEST_IMAGE)"
 	docker buildx build \
 	  --platform linux/amd64 \
 	  --build-arg GIT_COMMIT=$(GIT_SHA) \
 	  --build-arg GIT_BRANCH=$(GIT_BRANCH) \
 	  --build-arg BUILD_TIME=$(BUILD_TIME) \
-	  -t $(FULL_IMAGE) \
 	  -t $(LATEST_IMAGE) \
 	  --push \
 	  .
