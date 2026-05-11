@@ -3,7 +3,13 @@ import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
 import { upsertTagsInMarkdown } from './src/utils/markdownTags';
-import { getStorage } from './src/server/storage/index.js';
+import {
+  CONTENT_PREFIX,
+  contentKey,
+  getStorage,
+  imageKey,
+  mimeFromName,
+} from './src/server/storage/index.js';
 
 const port = 3000;
 
@@ -38,10 +44,10 @@ function sendJson(res: any, status: number, payload: unknown) {
 const apiPlugin = {
   name: 'cards-dev-api',
   configureServer(server: any) {
-    const contentDir = path.join(process.cwd(), 'src', 'content');
+    const contentDir = path.join(process.cwd(), 'public', 'content');
     const storage = getStorage();
 
-    // POST /api/save-tags — dev-only, edits src/content/<id>.md
+    // POST /api/save-tags — dev-only, edits public/content/<id>.md in place
     server.middlewares.use(
       '/api/save-tags',
       async (req: any, res: any) => {
@@ -80,7 +86,7 @@ const apiPlugin = {
           return sendJson(res, 400, { error: 'Invalid id' });
         }
         const buffer = Buffer.from(JSON.stringify(crop, null, 2), 'utf8');
-        await storage.save(team, `${id}.json`, buffer);
+        await storage.save(imageKey(team, `${id}.json`), buffer, 'application/json');
         sendJson(res, 200, { ok: true });
       } catch (e: any) {
         sendJson(res, 500, { error: e?.message ?? 'save-crop failed' });
@@ -102,11 +108,54 @@ const apiPlugin = {
         }
         const base64 = String(data).replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64, 'base64');
-        const result = await storage.save(team, filename, buffer);
-        sendJson(res, 200, { ok: true, ...result });
+        await storage.save(imageKey(team, filename), buffer, mimeFromName(filename));
+        sendJson(res, 200, { ok: true, path: `/exercise_images/${team}/${filename}` });
       } catch (e: any) {
         sendJson(res, 500, { error: e?.message ?? 'upload failed' });
       }
+    });
+
+    // GET /api/content — list available exercise markdown files
+    server.middlewares.use('/api/content', async (req: any, res: any) => {
+      if (req.method === 'GET') {
+        try {
+          const keys = await storage.list(CONTENT_PREFIX);
+          const ids = keys
+            .map((k: string) => k.replace(`${CONTENT_PREFIX}/`, ''))
+            .filter((name: string) => name.endsWith('.md'))
+            .map((name: string) => name.replace(/\.md$/, ''))
+            .sort();
+          return sendJson(res, 200, { ids });
+        } catch (e: any) {
+          return sendJson(res, 500, { error: e?.message ?? 'content list failed' });
+        }
+      }
+
+      if (req.method === 'POST') {
+        try {
+          const { id, markdown } = await readJsonBody(req);
+          if (typeof id !== 'string' || !ID_PATTERN.test(id)) {
+            return sendJson(res, 400, { error: 'Invalid id' });
+          }
+          if (typeof markdown !== 'string' || !markdown.trim()) {
+            return sendJson(res, 400, { error: 'Missing markdown body' });
+          }
+          const existing = await storage.read(contentKey(id));
+          if (existing) {
+            return sendJson(res, 409, { error: 'Exercise already exists' });
+          }
+          await storage.save(
+            contentKey(id),
+            Buffer.from(markdown, 'utf8'),
+            'text/markdown; charset=utf-8',
+          );
+          return sendJson(res, 200, { ok: true, id, path: `/content/${id}.md` });
+        } catch (e: any) {
+          return sendJson(res, 500, { error: e?.message ?? 'content create failed' });
+        }
+      }
+
+      return sendJson(res, 405, { error: 'Method not allowed' });
     });
   },
 };

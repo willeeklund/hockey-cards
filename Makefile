@@ -31,7 +31,7 @@ REVISION_SUFFIX := $(GIT_SHA)-$(TIMESTAMP)
 FULL_IMAGE   := $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(TAG)
 LATEST_IMAGE := $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest
 
-.PHONY: manual-deploy acr-login build-push update-container-app pull-images url logs help
+.PHONY: manual-deploy acr-login build-push update-container-app pull-content url logs help
 
 manual-deploy: acr-login build-push update-container-app  ## Full pipeline: log in → build & push → roll new revision
 
@@ -66,10 +66,12 @@ update-container-app:  ## Roll a new revision (suffix = git-sha + timestamp)
 	  --query "[?properties.active].{name:name, replicas:properties.replicas, trafficWeight:properties.trafficWeight}" \
 	  --output table
 
-BLOB_PREFIX := public/exercise_images
-PULL_PATTERN := $(if $(TEAM),$(BLOB_PREFIX)/$(TEAM)/*,$(BLOB_PREFIX)/*)
+# The app stores both uploaded images and exercise markdown under public/ in
+# the blob container. `pull-content` brings both back to your local working
+# tree so you can decide what to commit for persistence.
+PULL_PATTERN := $(if $(TEAM),public/exercise_images/$(TEAM)/*,public/*)
 
-pull-images:  ## Pull uploaded images from blob storage → public/exercise_images/ (optional: TEAM=<id> to limit to one team)
+pull-content:  ## Pull images + content from blob storage → public/ (optional: TEAM=<id> to limit images to one team)
 	@echo "→ Downloading blobs matching '$(PULL_PATTERN)' from $(STORAGE_ACCOUNT)/$(STORAGE_CONTAINER)"
 	@az storage blob download-batch \
 	  --account-name $(STORAGE_ACCOUNT) \
@@ -78,7 +80,7 @@ pull-images:  ## Pull uploaded images from blob storage → public/exercise_imag
 	  --destination . \
 	  --pattern '$(PULL_PATTERN)' \
 	  --output none
-	@echo "→ Done. Run 'git status public/exercise_images/' to see what's new or changed and pick what to commit."
+	@echo "→ Done. Run 'git status public/' to review what's new or changed and pick what to commit."
 
 url:  ## Print the public Container App URL
 	@az containerapp show \

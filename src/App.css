@@ -236,3 +236,28 @@
     break-after: auto;
   }
 }
+
+/* ── Loading / error overlays ────────────────────────────────────────── */
+.app-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.app-loading--error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.app-loading-detail {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+  opacity: 0.8;
+}

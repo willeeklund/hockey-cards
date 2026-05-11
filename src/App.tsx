@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import ExerciseCard from './components/ExerciseCard'
 import CardBack from './components/CardBack'
 import CardEditModal from './components/CardEditModal'
@@ -10,11 +10,31 @@ import { FALLBACK_TEAM_ID } from './config/teams'
 import { parseCard } from './utils/parseCard'
 import './App.css'
 
-const rawFiles = import.meta.glob('./content/*.md', { query: '?raw', import: 'default', eager: true })
 // Tag list controls both the filter chips in the toolbar AND the card sort
 // order — cards are grouped by their first matching tag from this list, in
 // this order. Cards with none of these tags are placed at the end.
 const ALL_TAGS = ['Klubbteknik', 'Rörlighet', 'Parövningar', 'Individuella']
+
+async function fetchAllCards() {
+  const listRes = await fetch('/api/content')
+  if (!listRes.ok) throw new Error(`HTTP ${listRes.status} från /api/content`)
+  const { ids } = (await listRes.json()) as { ids: string[] }
+
+  const parsed = await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const res = await fetch(`/content/${id}.md`)
+        if (!res.ok) return null
+        const raw = await res.text()
+        const { id: parsedId, data } = parseCard(raw, `${id}.md`)
+        return { id: parsedId, ...data }
+      } catch {
+        return null
+      }
+    })
+  )
+  return parsed.filter((c): c is { id: string; [key: string]: any } => c !== null)
+}
 
 function primaryTagIndex(card) {
   const cardTags = card.tags || []
@@ -69,38 +89,61 @@ function App() {
   const displayTeamId = teamId ?? FALLBACK_TEAM_ID
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  const cards = useMemo(() => {
-    // First pass: parse + alphabetical-by-filename order.
-    const parsed = Object.entries(rawFiles)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([filePath, raw]) => {
-        const { id, data } = parseCard(raw, filePath)
-        return { id, ...data }
+  // Cards are now fetched from /api/content + /content/<id>.md at runtime
+  // (used to be bundled via import.meta.glob). The two effects below load
+  // the list once on mount and initialise the user-visible selection /
+  // crops once the list arrives.
+  const [cards, setCards] = useState<Array<{ id: string; [key: string]: any }>>([])
+  const [contentStatus, setContentStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [contentError, setContentError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    fetchAllCards()
+      .then(loaded => {
+        if (cancelled) return
+        loaded.sort((a, b) => primaryTagIndex(a) - primaryTagIndex(b))
+        setCards(loaded)
+        setContentStatus('ready')
       })
-    // Second pass: stable sort by primary tag — preserves the alphabetical
-    // order from above within each tag group.
-    return parsed.sort((a, b) => primaryTagIndex(a) - primaryTagIndex(b))
+      .catch((e: any) => {
+        if (cancelled) return
+        setContentError(e?.message ?? 'Okänt fel')
+        setContentStatus('error')
+      })
+    return () => { cancelled = true }
   }, [])
 
   // Initialise from URL
   const urlInit = useMemo(() => readUrl(), [])
 
-  const [selectedIds, setSelectedIds] = useState(() => {
-    if (!urlInit.cards) return new Set(cards.map(c => c.id))
-    const valid = new Set(cards.map(c => c.id))
-    return new Set(urlInit.cards.split(',').filter(id => valid.has(id)))
-  })
-
-  const [editId, setEditId] = useState(() => {
-    return urlInit.edit && cards.some(c => c.id === urlInit.edit) ? urlInit.edit : null
-  })
-
-  const [activeTags, setActiveTags] = useState(() => {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [editId, setEditId] = useState<string | null>(urlInit.edit)
+  const [activeTags, setActiveTags] = useState<Set<string>>(() => {
     if (!urlInit.tags) return new Set()
     return new Set(urlInit.tags.split(',').filter(t => ALL_TAGS.includes(t)))
   })
+  const [transforms, setTransforms] = useState<Record<string, any>>({})
 
-  const [transforms, setTransforms] = useState(() => loadLocalCrops(cards))
+  // First time cards arrive, derive default selectedIds, validate the
+  // ?edit=… URL param against the loaded set, and seed transforms from
+  // localStorage. After the first hydration we keep the user's existing
+  // selection — adding a new exercise won't clobber what's selected.
+  const hydratedRef = useRef(false)
+  useEffect(() => {
+    if (cards.length === 0) return
+    if (hydratedRef.current) return
+    hydratedRef.current = true
+
+    const validIds = new Set(cards.map(c => c.id))
+    setSelectedIds(
+      urlInit.cards
+        ? new Set(urlInit.cards.split(',').filter(id => validIds.has(id)))
+        : validIds
+    )
+    if (urlInit.edit && !validIds.has(urlInit.edit)) setEditId(null)
+    setTransforms(loadLocalCrops(cards))
+  }, [cards, urlInit])
 
   // Sync URL whenever relevant state changes
   useEffect(() => {
@@ -163,6 +206,23 @@ function App() {
       next.has(tag) ? next.delete(tag) : next.add(tag)
       return next
     })
+  }
+
+  if (contentStatus === 'loading') {
+    return (
+      <div className="app-loading">
+        <p>Laddar övningar…</p>
+      </div>
+    )
+  }
+
+  if (contentStatus === 'error') {
+    return (
+      <div className="app-loading app-loading--error">
+        <p>Kunde inte ladda övningar.</p>
+        <p className="app-loading-detail">{contentError}</p>
+      </div>
+    )
   }
 
   return (

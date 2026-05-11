@@ -1,9 +1,16 @@
 export type Backend = 'local' | 'blob';
 
-export interface ImageStorage {
+/**
+ * Generic key/value file storage. Keys are full paths like
+ * `public/exercise_images/<team>/<file>.jpg` or `public/content/<id>.md`.
+ * The local backend writes them under the project root; the blob backend
+ * uses them as blob names directly.
+ */
+export interface FileStorage {
   backend: Backend;
-  save(team: string, filename: string, data: Buffer): Promise<{ path: string }>;
-  read(team: string, filename: string): Promise<Buffer | null>;
+  save(key: string, data: Buffer, contentType?: string): Promise<void>;
+  read(key: string): Promise<Buffer | null>;
+  list(prefix: string): Promise<string[]>;
 }
 
 export function mimeFromName(filename: string): string {
@@ -20,6 +27,8 @@ export function mimeFromName(filename: string): string {
       return 'image/gif';
     case 'json':
       return 'application/json';
+    case 'md':
+      return 'text/markdown; charset=utf-8';
     default:
       return 'application/octet-stream';
   }
