@@ -1,0 +1,184 @@
+.exercise-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.exercise-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-form-row--full {
+  width: 100%;
+}
+
+.exercise-form-row-pair {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.exercise-form-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.exercise-form-hint {
+  font-weight: 500;
+  color: #94a3b8;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.exercise-form-input {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.exercise-form-input:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.exercise-form-input--narrow {
+  max-width: 6rem;
+}
+
+.exercise-form-input--mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-transform: lowercase;
+}
+
+.exercise-form-textarea {
+  resize: vertical;
+  min-height: 3.5rem;
+}
+
+.exercise-form-id {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.4rem;
+  background: #f1f5f9;
+  color: #475569;
+  align-self: flex-start;
+}
+
+.exercise-form-color-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.exercise-form-color-swatch {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.exercise-form-color-swatch::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.exercise-form-color-swatch::-webkit-color-swatch {
+  border: none;
+  border-radius: 0.35rem;
+}
+
+.exercise-form-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.exercise-form-tip-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.exercise-form-tip-remove {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.4rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.exercise-form-tip-remove:hover {
+  color: #b91c1c;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.exercise-form-tip-add {
+  align-self: flex-start;
+  padding: 0.35rem 0.7rem;
+  border: 1px dashed #94a3b8;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: #475569;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.exercise-form-tip-add:hover {
+  border-color: #3b82f6;
+  color: #1e3a8a;
+}
+
+.exercise-form-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.exercise-form-tag {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.exercise-form-tag:hover {
+  border-color: #94a3b8;
+}
+
+.exercise-form-tag--on {
+  background: #1e3a8a;
+  border-color: #1e3a8a;
+  color: #fff;
+}

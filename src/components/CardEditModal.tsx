@@ -1,7 +1,14 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGestures } from '../hooks/useGestures'
 import { useTeam } from '../context/TeamContext'
 import { FALLBACK_TEAM_ID } from '../config/teams'
+import ExerciseFormFields from './ExerciseFormFields'
+import {
+  fieldsEqual,
+  fieldsFromCard,
+  serializeCard,
+  type ExerciseFields,
+} from '../utils/cardMarkdown'
 import './CardEditModal.css'
 
 const DEFAULT_XFORM = { x: 0, y: 0, scale: 1 }
@@ -14,20 +21,34 @@ function xformEqual(a, b) {
   return Math.abs(a.x - b.x) < 0.001 && Math.abs(a.y - b.y) < 0.001 && Math.abs(a.scale - b.scale) < 0.001
 }
 
-export default function CardEditModal({ card, transform, onTransformChange, onClose }) {
+type Props = {
+  card: { id: string; [key: string]: any }
+  transform: { x: number; y: number; scale: number }
+  onTransformChange: (next: { x: number; y: number; scale: number }) => void
+  onClose: () => void
+  /** Called after a successful save so the parent can re-fetch the card
+   *  list (titles/colors/tips may have changed). */
+  onSaved?: () => void | Promise<void>
+}
+
+export default function CardEditModal({ card, transform, onTransformChange, onClose, onSaved }: Props) {
   const { teamId, teams, setTeamId } = useTeam()
   const displayTeamId = teamId ?? FALLBACK_TEAM_ID
 
   // Local-only pending edits — nothing is sent to the server until Save.
-  const [pendingUpload, setPendingUpload] = useState(null) // { base64, previewUrl } | null
+  const [pendingUpload, setPendingUpload] = useState<{ base64: string; previewUrl: string } | null>(null)
   const [imgError, setImgError] = useState(false)
-  const [saveStatus, setSaveStatus] = useState('idle') // 'idle' | 'saving' | 'success' | 'error'
-  const [saveError, setSaveError] = useState(null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
+  const [saveError, setSaveError] = useState('')
 
   // Snapshot the transform when the modal opens so we can tell if the user
-  // has touched the crop since opening (otherwise the save would just
-  // re-post the existing crop on every Save).
+  // has touched the crop since opening.
   const [initialTransform] = useState(transform)
+
+  // Form fields — initialised once from the card; not re-derived on every
+  // render so the user can edit freely.
+  const initialFields = useMemo<ExerciseFields>(() => fieldsFromCard(card), [card.id])
+  const [fields, setFields] = useState<ExerciseFields>(initialFields)
 
   const areaRef = useRef(null)
   const xformRef = useRef(transform)
@@ -62,10 +83,10 @@ export default function CardEditModal({ card, transform, onTransformChange, onCl
     if (!file) return
     const reader = new FileReader()
     reader.onload = (e) => {
-      setPendingUpload({ base64: e.target.result, previewUrl: URL.createObjectURL(file) })
+      setPendingUpload({ base64: e.target!.result as string, previewUrl: URL.createObjectURL(file) })
       setImgError(false)
       setSaveStatus('idle')
-      setSaveError(null)
+      setSaveError('')
     }
     reader.readAsDataURL(file)
   }
@@ -73,36 +94,44 @@ export default function CardEditModal({ card, transform, onTransformChange, onCl
   function handleResetCrop() {
     onTransformChange({ ...DEFAULT_XFORM })
     setSaveStatus('idle')
-    setSaveError(null)
+    setSaveError('')
+  }
+
+  function handleFieldsChange(next: ExerciseFields) {
+    setFields(next)
+    setSaveStatus('idle')
+    setSaveError('')
   }
 
   const imageDirty = pendingUpload !== null
   const cropDirty = !xformEqual(transform, initialTransform)
-  const isDirty = imageDirty || cropDirty
+  const fieldsDirty = !fieldsEqual(fields, initialFields)
+  const isDirty = imageDirty || cropDirty || fieldsDirty
+  const teamRequired = imageDirty || cropDirty
 
-  // Reset a success/error status the moment the user makes another edit
-  // (e.g. pans the image after a successful save).
+  // Reset success/error status when the user makes another edit.
   useEffect(() => {
     if (isDirty && (saveStatus === 'success' || saveStatus === 'error')) {
       setSaveStatus('idle')
-      setSaveError(null)
+      setSaveError('')
     }
   }, [isDirty, saveStatus])
 
   async function handleSave() {
-    if (!teamId || !isDirty || saveStatus === 'saving') return
+    if (!isDirty || saveStatus === 'saving') return
+    if (teamRequired && !teamId) return
     setSaveStatus('saving')
-    setSaveError(null)
+    setSaveError('')
     try {
-      if (imageDirty) {
+      if (imageDirty && teamId) {
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ team: teamId, filename: `${card.id}.jpg`, data: pendingUpload.base64 }),
+          body: JSON.stringify({ team: teamId, filename: `${card.id}.jpg`, data: pendingUpload!.base64 }),
         })
         if (!res.ok) throw new Error('Kunde inte ladda upp bilden')
       }
-      if (cropDirty) {
+      if (cropDirty && teamId) {
         const res = await fetch('/api/save-crop', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -110,13 +139,28 @@ export default function CardEditModal({ card, transform, onTransformChange, onCl
         })
         if (!res.ok) throw new Error('Kunde inte spara beskärningen')
       }
+      if (fieldsDirty) {
+        const sanitised: ExerciseFields = {
+          ...fields,
+          title: fields.title.trim(),
+          emoji: fields.emoji.trim(),
+          color: fields.color.trim(),
+          syfte: fields.syfte.trim(),
+          tips: fields.tips.map((t) => t.trim()).filter(Boolean),
+        }
+        const res = await fetch(`/api/content/${card.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ markdown: serializeCard(sanitised) }),
+        })
+        if (!res.ok) throw new Error('Kunde inte spara övningens uppgifter')
+      }
       setSaveStatus('success')
-      // Auto-close shortly after a successful save so the user sees the
-      // confirmation but doesn't have to dismiss the modal manually.
+      if (onSaved) await onSaved()
       setTimeout(() => onClose(), 800)
-    } catch (e) {
+    } catch (e: any) {
       setSaveStatus('error')
-      setSaveError(e.message || 'Ett fel uppstod')
+      setSaveError(e?.message || 'Ett fel uppstod')
     }
   }
 
@@ -127,111 +171,122 @@ export default function CardEditModal({ card, transform, onTransformChange, onCl
   else if (saveStatus === 'success') saveLabel = '✓ Sparat'
   else if (saveStatus === 'error') saveLabel = '✕ Försök igen'
 
+  // Use the live form values for the header so the user sees their edits
+  // reflected immediately.
+  const headerColor = fields.color || card.color || '#888'
+  const headerEmoji = fields.emoji || card.emoji || '⭐'
+  const headerTitle = fields.title || card.title || '(utan titel)'
+
   return (
     <div className="modal-backdrop" onClick={handleBackdrop}>
       <div className="modal-panel">
 
         {/* Header */}
-        <div className="modal-header" style={{ background: card.color || '#888' }}>
-          <span className="modal-emoji">{card.emoji || '⭐'}</span>
-          <h2 className="modal-title">{card.title}</h2>
+        <div className="modal-header" style={{ background: headerColor }}>
+          <span className="modal-emoji">{headerEmoji}</span>
+          <h2 className="modal-title">{headerTitle}</h2>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
 
-        {/* Image editor */}
-        <div className="modal-editor">
-          <div className="modal-image-area" ref={areaRef}>
-            {!imgError ? (
-              <div
-                className="modal-image-wrapper"
-                style={{ '--tx': transform.x, '--ty': transform.y, '--scale': transform.scale }}
-              >
-                <img
-                  src={imageSrc}
-                  alt={card.title}
-                  className="modal-image"
-                  onError={() => setImgError(true)}
-                  draggable={false}
-                />
-              </div>
-            ) : (
-              <div className="modal-image-placeholder">
-                <span>📷</span>
-                <p>Ingen bild uppladdad</p>
-              </div>
-            )}
-            {cropEdited && <span className="modal-edited-badge">Beskuren</span>}
+        <div className="modal-scrollable">
+          {/* Image editor */}
+          <div className="modal-editor">
+            <div className="modal-image-area" ref={areaRef}>
+              {!imgError ? (
+                <div
+                  className="modal-image-wrapper"
+                  style={{ '--tx': transform.x, '--ty': transform.y, '--scale': transform.scale } as any}
+                >
+                  <img
+                    src={imageSrc}
+                    alt={headerTitle}
+                    className="modal-image"
+                    onError={() => setImgError(true)}
+                    draggable={false}
+                  />
+                </div>
+              ) : (
+                <div className="modal-image-placeholder">
+                  <span>📷</span>
+                  <p>Ingen bild uppladdad</p>
+                </div>
+              )}
+              {cropEdited && <span className="modal-edited-badge">Beskuren</span>}
+            </div>
+            <p className="modal-hint">Dra för att flytta · Scroll/nyp för att zooma</p>
           </div>
-          <p className="modal-hint">Dra för att flytta · Scroll/nyp för att zooma</p>
+
+          {/* Image-related controls */}
+          <div className="modal-controls">
+            <div className="modal-controls-row">
+              <label className="modal-btn modal-btn--upload">
+                {pendingUpload ? '📷 Byt bild igen…' : '📷 Välj foto…'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={e => handleFileSelected(e.target.files?.[0])}
+                />
+              </label>
+
+              <button
+                className="modal-btn modal-btn--secondary"
+                onClick={handleResetCrop}
+                disabled={!cropEdited}
+                title="Återställ beskärning"
+              >
+                ↺ Återställ beskärning
+              </button>
+            </div>
+          </div>
+
+          {/* Editable exercise fields */}
+          <div className="modal-fields">
+            <ExerciseFormFields fields={fields} onChange={handleFieldsChange} />
+          </div>
         </div>
 
-        {/* Controls */}
-        <div className="modal-controls">
-          {/* File picker + crop reset — purely local actions, no save */}
-          <div className="modal-controls-row">
-            <label className="modal-btn modal-btn--upload">
-              {pendingUpload ? '📷 Byt bild igen…' : '📷 Välj foto…'}
-              <input
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={e => handleFileSelected(e.target.files[0])}
-              />
-            </label>
-
-            <button
-              className="modal-btn modal-btn--secondary"
-              onClick={handleResetCrop}
-              disabled={!cropEdited}
-              title="Återställ beskärning"
-            >
-              ↺ Återställ beskärning
-            </button>
-          </div>
-
-          {/* Single Save action — nothing is persisted to the server until
-              this button is pressed. */}
-          <div className="modal-save-row">
-            <div className="modal-save-status">
-              {saveStatus === 'idle' && isDirty && (
-                <span className="modal-save-hint">Du har osparade ändringar.</span>
-              )}
-              {saveStatus === 'idle' && !isDirty && (
-                <span className="modal-save-hint modal-save-hint--muted">Inga ändringar att spara.</span>
-              )}
-              {saveStatus === 'error' && saveError && (
-                <span className="modal-save-hint modal-save-hint--error">{saveError}</span>
-              )}
-            </div>
-
-            {teamId ? (
-              <button
-                className={`modal-btn modal-btn--primary modal-btn--save${
-                  saveStatus === 'success' ? ' modal-btn--success'
-                  : saveStatus === 'error' ? ' modal-btn--error'
-                  : ''
-                }`}
-                onClick={handleSave}
-                disabled={!isDirty || saveStatus === 'saving' || saveStatus === 'success'}
-              >
-                {saveLabel}
-              </button>
-            ) : (
-              <label className="modal-upload-pick-team" title="Välj först vilket lag bilden ska sparas för">
-                <span className="modal-upload-pick-label">💾 Spara till lag:</span>
-                <select
-                  className="modal-upload-pick-select"
-                  value=""
-                  onChange={e => { if (e.target.value) setTeamId(e.target.value) }}
-                >
-                  <option value="" disabled>Välj lag…</option>
-                  {teams.map(t => (
-                    <option key={t.id} value={t.id}>{t.label}</option>
-                  ))}
-                </select>
-              </label>
+        {/* Save action — sticky footer */}
+        <div className="modal-save-row modal-save-row--footer">
+          <div className="modal-save-status">
+            {saveStatus === 'idle' && isDirty && (
+              <span className="modal-save-hint">Du har osparade ändringar.</span>
+            )}
+            {saveStatus === 'idle' && !isDirty && (
+              <span className="modal-save-hint modal-save-hint--muted">Inga ändringar att spara.</span>
+            )}
+            {saveStatus === 'error' && saveError && (
+              <span className="modal-save-hint modal-save-hint--error">{saveError}</span>
             )}
           </div>
+
+          {teamRequired && !teamId ? (
+            <label className="modal-upload-pick-team" title="Välj först vilket lag bildändringarna ska sparas för">
+              <span className="modal-upload-pick-label">💾 Spara till lag:</span>
+              <select
+                className="modal-upload-pick-select"
+                value=""
+                onChange={e => { if (e.target.value) setTeamId(e.target.value) }}
+              >
+                <option value="" disabled>Välj lag…</option>
+                {teams.map(t => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <button
+              className={`modal-btn modal-btn--primary modal-btn--save${
+                saveStatus === 'success' ? ' modal-btn--success'
+                : saveStatus === 'error' ? ' modal-btn--error'
+                : ''
+              }`}
+              onClick={handleSave}
+              disabled={!isDirty || saveStatus === 'saving' || saveStatus === 'success'}
+            >
+              {saveLabel}
+            </button>
+          )}
         </div>
       </div>
     </div>

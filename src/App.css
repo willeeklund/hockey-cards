@@ -261,3 +261,23 @@
   font-weight: 400;
   opacity: 0.8;
 }
+
+/* ── "Ny övning" toolbar button ──────────────────────────────────────── */
+.new-exercise-toolbar-btn {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.new-exercise-toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.7);
+}

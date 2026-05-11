@@ -115,9 +115,15 @@ const apiPlugin = {
       }
     });
 
-    // GET /api/content — list available exercise markdown files
+    // /api/content — GET list, POST create, PUT /api/content/<id> update
     server.middlewares.use('/api/content', async (req: any, res: any) => {
-      if (req.method === 'GET') {
+      // Connect strips the mount prefix from req.url, so the path here is
+      // either '/' (collection) or '/<id>' (single resource).
+      const trailing = (req.url ?? '/').split('?')[0];
+      const idMatch = trailing.match(/^\/([\w-]+)$/);
+      const idFromUrl = idMatch?.[1];
+
+      if (req.method === 'GET' && !idFromUrl) {
         try {
           const keys = await storage.list(CONTENT_PREFIX);
           const ids = keys
@@ -131,7 +137,7 @@ const apiPlugin = {
         }
       }
 
-      if (req.method === 'POST') {
+      if (req.method === 'POST' && !idFromUrl) {
         try {
           const { id, markdown } = await readJsonBody(req);
           if (typeof id !== 'string' || !ID_PATTERN.test(id)) {
@@ -152,6 +158,27 @@ const apiPlugin = {
           return sendJson(res, 200, { ok: true, id, path: `/content/${id}.md` });
         } catch (e: any) {
           return sendJson(res, 500, { error: e?.message ?? 'content create failed' });
+        }
+      }
+
+      if (req.method === 'PUT' && idFromUrl) {
+        try {
+          const { markdown } = await readJsonBody(req);
+          if (typeof markdown !== 'string' || !markdown.trim()) {
+            return sendJson(res, 400, { error: 'Missing markdown body' });
+          }
+          const existing = await storage.read(contentKey(idFromUrl));
+          if (!existing) {
+            return sendJson(res, 404, { error: 'Exercise not found' });
+          }
+          await storage.save(
+            contentKey(idFromUrl),
+            Buffer.from(markdown, 'utf8'),
+            'text/markdown; charset=utf-8',
+          );
+          return sendJson(res, 200, { ok: true, id: idFromUrl, path: `/content/${idFromUrl}.md` });
+        } catch (e: any) {
+          return sendJson(res, 500, { error: e?.message ?? 'content update failed' });
         }
       }
 

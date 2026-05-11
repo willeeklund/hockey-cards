@@ -91,6 +91,9 @@ app.get('/api/content', async (_req: Request, res: Response) => {
       .filter((name) => name.endsWith('.md'))
       .map((name) => name.replace(/\.md$/, ''))
       .sort();
+    // Don't cache — the list changes the moment a user creates or
+    // deletes an exercise.
+    res.setHeader('Cache-Control', 'no-store');
     res.json({ ids });
   } catch (e: any) {
     console.error('content list error', e);
@@ -117,6 +120,29 @@ app.post('/api/content', async (req: Request, res: Response) => {
   } catch (e: any) {
     console.error('content create error', e);
     res.status(500).json({ error: e?.message ?? 'content create failed' });
+  }
+});
+
+// ── API: update an existing exercise ─────────────────────────────────
+app.put('/api/content/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { markdown } = req.body ?? {};
+    if (!ID_PATTERN.test(id)) {
+      return res.status(400).json({ error: 'Invalid id' });
+    }
+    if (typeof markdown !== 'string' || !markdown.trim()) {
+      return res.status(400).json({ error: 'Missing markdown body' });
+    }
+    const existing = await storage.read(contentKey(id));
+    if (!existing) {
+      return res.status(404).json({ error: 'Exercise not found' });
+    }
+    await storage.save(contentKey(id), Buffer.from(markdown, 'utf8'), 'text/markdown; charset=utf-8');
+    res.json({ ok: true, id, path: `/content/${id}.md` });
+  } catch (e: any) {
+    console.error('content update error', e);
+    res.status(500).json({ error: e?.message ?? 'content update failed' });
   }
 });
 
@@ -158,7 +184,8 @@ app.get(
       const buffer = await storage.read(contentKey(id));
       if (!buffer) return next();
       res.setHeader('Content-Type', mimeFromName(filename));
-      res.setHeader('Cache-Control', 'public, max-age=30');
+      // The file's content changes on every edit — never cache.
+      res.setHeader('Cache-Control', 'no-store');
       res.send(buffer);
     } catch (e) {
       next(e);

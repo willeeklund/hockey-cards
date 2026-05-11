@@ -1,0 +1,119 @@
+.new-exercise-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.78);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  z-index: 700;
+}
+
+.new-exercise-panel {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.new-exercise-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.new-exercise-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.new-exercise-close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.new-exercise-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.new-exercise-body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.new-exercise-error {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.9rem;
+}
+
+.new-exercise-error code {
+  background: rgba(153, 27, 27, 0.1);
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+}
+
+.new-exercise-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.new-exercise-btn {
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.new-exercise-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.new-exercise-btn--secondary {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.new-exercise-btn--secondary:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.new-exercise-btn--primary {
+  background: #1e3a8a;
+  color: #fff;
+}
+
+.new-exercise-btn--primary:hover:not(:disabled) {
+  background: #1e40af;
+}

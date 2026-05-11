@@ -5,6 +5,7 @@ import CardEditModal from './components/CardEditModal'
 import SelectionBar from './components/SelectionBar'
 import TeamSelector from './components/TeamSelector'
 import TeamPicker from './components/TeamPicker'
+import NewExerciseModal from './components/NewExerciseModal'
 import { useTeam } from './context/TeamContext'
 import { FALLBACK_TEAM_ID } from './config/teams'
 import { parseCard } from './utils/parseCard'
@@ -16,14 +17,17 @@ import './App.css'
 const ALL_TAGS = ['Klubbteknik', 'Rörlighet', 'Parövningar', 'Individuella']
 
 async function fetchAllCards() {
-  const listRes = await fetch('/api/content')
+  // Bypass any browser cache — the list and each .md file change every
+  // time a user creates or edits an exercise, and we re-fetch immediately
+  // after those mutations.
+  const listRes = await fetch('/api/content', { cache: 'no-store' })
   if (!listRes.ok) throw new Error(`HTTP ${listRes.status} från /api/content`)
   const { ids } = (await listRes.json()) as { ids: string[] }
 
   const parsed = await Promise.all(
     ids.map(async (id) => {
       try {
-        const res = await fetch(`/content/${id}.md`)
+        const res = await fetch(`/content/${id}.md`, { cache: 'no-store' })
         if (!res.ok) return null
         const raw = await res.text()
         const { id: parsedId, data } = parseCard(raw, `${id}.md`)
@@ -88,6 +92,7 @@ function App() {
   // been picked yet. Upload paths still require a real teamId.
   const displayTeamId = teamId ?? FALLBACK_TEAM_ID
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [newExerciseOpen, setNewExerciseOpen] = useState(false)
 
   // Cards are now fetched from /api/content + /content/<id>.md at runtime
   // (used to be bundled via import.meta.glob). The two effects below load
@@ -97,22 +102,27 @@ function App() {
   const [contentStatus, setContentStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [contentError, setContentError] = useState('')
 
-  useEffect(() => {
-    let cancelled = false
-    fetchAllCards()
-      .then(loaded => {
-        if (cancelled) return
-        loaded.sort((a, b) => primaryTagIndex(a) - primaryTagIndex(b))
-        setCards(loaded)
-        setContentStatus('ready')
-      })
-      .catch((e: any) => {
-        if (cancelled) return
+  // Re-fetch the card list (after create / update / blob-storage edit).
+  // Same code path as the initial load; on initial load we also flip the
+  // load status to 'ready' so the loading screen goes away.
+  const refreshCards = useCallback(async (opts: { initial?: boolean } = {}) => {
+    try {
+      const loaded = await fetchAllCards()
+      loaded.sort((a, b) => primaryTagIndex(a) - primaryTagIndex(b))
+      setCards(loaded)
+      setContentStatus('ready')
+    } catch (e: any) {
+      if (opts.initial) {
         setContentError(e?.message ?? 'Okänt fel')
         setContentStatus('error')
-      })
-    return () => { cancelled = true }
+      }
+      throw e
+    }
   }, [])
+
+  useEffect(() => {
+    refreshCards({ initial: true }).catch(() => { /* state already updated */ })
+  }, [refreshCards])
 
   // Initialise from URL
   const urlInit = useMemo(() => readUrl(), [])
@@ -249,6 +259,14 @@ function App() {
           </div>
 
           <button
+            className="new-exercise-toolbar-btn"
+            onClick={() => setNewExerciseOpen(true)}
+            title="Skapa en ny övning"
+          >
+            ✨ Ny övning
+          </button>
+
+          <button
             className="print-btn"
             onClick={() => window.print()}
             disabled={selectedIds.size === 0}
@@ -304,6 +322,23 @@ function App() {
           transform={getTransform(editCard.id)}
           onTransformChange={next => updateTransform(editCard.id, next)}
           onClose={() => setEditId(null)}
+          onSaved={() => refreshCards()}
+        />
+      )}
+
+      {/* ── New exercise modal ───────────────────────────────────────── */}
+      {newExerciseOpen && (
+        <NewExerciseModal
+          existingIds={new Set(cards.map(c => c.id))}
+          onClose={() => setNewExerciseOpen(false)}
+          onCreated={async (id) => {
+            // Refresh the full list (no cache) so the new card appears
+            // immediately, and pre-select it. The NewExerciseModal closes
+            // itself once this callback resolves; the user lands back on
+            // the main view with the new exercise visible in the list.
+            await refreshCards()
+            setSelectedIds(prev => new Set([...prev, id]))
+          }}
         />
       )}
 
