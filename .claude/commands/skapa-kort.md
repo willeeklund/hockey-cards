@@ -5,8 +5,8 @@ Skapa ett nytt övningskort för hockey-cards-appen baserat på användarens bes
 ## Instruktioner
 
 1. **Läs** `README.md` för att förstå formatet och reglerna.
-2. **Läs** alla befintliga kort i `src/content/` för att undvika dubbletter och välja en färg som inte redan används.
-3. Skapa filen `src/content/<kebab-case-namn>.md` med följande regler:
+2. **Läs** alla befintliga kort i `public/content/` för att undvika dubbletter och välja en färg som inte redan används.
+3. Skapa filen `public/content/<kebab-case-namn>.md` med följande regler:
    - `title`: Övningens namn på svenska
    - `emoji`: Välj en passande emoji för övningen
    - `color`: Välj en hex-färg som inte redan används av ett annat kort
