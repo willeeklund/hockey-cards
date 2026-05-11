@@ -1,27 +1,16 @@
 import './SelectionBar.css'
 
 export default function SelectionBar({ cards, selectedIds, onChange }) {
-  const allSelected = selectedIds.size === cards.length
-  const noneSelected = selectedIds.size === 0
-
   function toggle(id) {
     const next = new Set(selectedIds)
     next.has(id) ? next.delete(id) : next.add(id)
     onChange(next)
   }
 
-  function selectAll() {
-    onChange(new Set(cards.map(c => c.id)))
-  }
-
-  function selectNone() {
-    onChange(new Set())
-  }
-
   return (
     <div className="selection-bar no-print">
       <div className="selection-bar-inner">
-        <span className="selection-label">Välj kort:</span>
+        <span className="selection-label">Välj enskilda kort:</span>
 
         <div className="chip-list">
           {cards.map(card => {
@@ -36,27 +25,12 @@ export default function SelectionBar({ cards, selectedIds, onChange }) {
               >
                 <span className="chip-emoji">{card.emoji || '⭐'}</span>
                 <span className="chip-title">{card.title}</span>
-                {selected && <span className="chip-check">✓</span>}
+                {/* Always rendered so the chip stays the same width whether
+                    or not it's selected — only the visibility toggles. */}
+                <span className="chip-check" aria-hidden={!selected}>✓</span>
               </button>
             )
           })}
-        </div>
-
-        <div className="selection-actions">
-          <button
-            className="sel-btn"
-            onClick={selectAll}
-            disabled={allSelected}
-          >
-            Alla
-          </button>
-          <button
-            className="sel-btn"
-            onClick={selectNone}
-            disabled={noneSelected}
-          >
-            Rensa
-          </button>
         </div>
       </div>
     </div>

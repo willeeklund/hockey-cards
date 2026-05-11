@@ -56,32 +56,10 @@
 }
 
 
-/* ── Tag filter buttons ──────────────────────────────────────────────── */
-.tag-filters {
-  display: flex;
-  gap: 4px;
+/* Pushes the toolbar's right-hand buttons (Ny övning, Skriv ut) over
+   now that the tag filters live in their own filter row below. */
+.toolbar-spacer {
   flex: 1;
-  flex-wrap: wrap;
-}
-
-.tag-filter-btn {
-  background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  border-radius: 999px;
-  padding: 4px 12px;
-  font-family: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #aaa;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.tag-filter-btn:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
-.tag-filter-btn--on {
-  background: #ffd60a;
-  border-color: #ffd60a;
-  color: #1a1a2e;
 }
 
 .print-btn {

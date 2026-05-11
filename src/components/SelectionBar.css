@@ -77,6 +77,12 @@
   opacity: 0.85;
 }
 
+/* The check is always rendered so chip width is stable; only hide it
+   visually when the chip isn't selected. */
+.chip--off .chip-check {
+  visibility: hidden;
+}
+
 /* ── Alla / Rensa ────────────────────────────────────────────────────── */
 .selection-actions {
   display: flex;

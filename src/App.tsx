@@ -3,6 +3,7 @@ import ExerciseCard from './components/ExerciseCard'
 import CardBack from './components/CardBack'
 import CardEditModal from './components/CardEditModal'
 import SelectionBar from './components/SelectionBar'
+import FilterBar from './components/FilterBar'
 import TeamSelector from './components/TeamSelector'
 import TeamPicker from './components/TeamPicker'
 import NewExerciseModal from './components/NewExerciseModal'
@@ -11,10 +12,16 @@ import { FALLBACK_TEAM_ID } from './config/teams'
 import { parseCard } from './utils/parseCard'
 import './App.css'
 
-// Tag list controls both the filter chips in the toolbar AND the card sort
-// order — cards are grouped by their first matching tag from this list, in
-// this order. Cards with none of these tags are placed at the end.
-const ALL_TAGS = ['Klubbteknik', 'Rörlighet', 'Parövningar', 'Individuella']
+// Filter dimensions, each one a mutually-exclusive group: a card is either
+// klubbteknik OR rörlighet (never both), and either parövning OR
+// individuell. Picking one option in a group deselects the other.
+// The flat list (TAG_GROUPS.flat()) also controls card sort order — cards
+// are grouped by their first matching tag from this list, in this order.
+const TAG_GROUPS = [
+  ['Klubbteknik', 'Rörlighet'],
+  ['Parövningar', 'Individuella'],
+] as const
+const ALL_TAGS = TAG_GROUPS.flat()
 
 async function fetchAllCards() {
   // Bypass any browser cache — the list and each .md file change every
@@ -46,6 +53,18 @@ function primaryTagIndex(card) {
     if (cardTags.includes(ALL_TAGS[i])) return i
   }
   return ALL_TAGS.length
+}
+
+/** Returns the subset of `cards` whose tags include *every* active tag. */
+function filterCardsByTags(cards, activeTags) {
+  if (activeTags.size === 0) return cards
+  return cards.filter(c => {
+    const cardTags = new Set(c.tags || [])
+    for (const t of activeTags) {
+      if (!cardTags.has(t)) return false
+    }
+    return true
+  })
 }
 
 // ── URL helpers ────────────────────────────────────────────────────────
@@ -191,11 +210,14 @@ function App() {
 
   const getTransform = useCallback((cardId) => transforms[cardId] || DEFAULT_XFORM, [transforms])
 
-  // ── Filtered cards ─────────────────────────────────────────────────
-  const filteredCards = useMemo(() => {
-    if (activeTags.size === 0) return cards
-    return cards.filter(c => (c.tags || []).some(t => activeTags.has(t)))
-  }, [cards, activeTags])
+  // ── Filtered cards (AND across active tags) ────────────────────────
+  // No active tags → show everything. One or more active tags → a card
+  // must have *all* of them to be included. (Match the "stacking filters
+  // narrow the set" mental model rather than "any-of".)
+  const filteredCards = useMemo(
+    () => filterCardsByTags(cards, activeTags),
+    [cards, activeTags]
+  )
 
   const selectedCards = useMemo(
     () => filteredCards.filter(c => selectedIds.has(c.id)),
@@ -213,7 +235,21 @@ function App() {
   function toggleTag(tag) {
     setActiveTags(prev => {
       const next = new Set(prev)
-      next.has(tag) ? next.delete(tag) : next.add(tag)
+      if (next.has(tag)) {
+        // Click on the already-active tag in its group → turn the group off.
+        next.delete(tag)
+      } else {
+        // Activating a new tag: clear the rest of its group first so only
+        // one tag per group is ever active.
+        const group = TAG_GROUPS.find((g) => (g as readonly string[]).includes(tag))
+        if (group) for (const t of group) next.delete(t)
+        next.add(tag)
+      }
+      // Every time the filter changes, snap the selection to the new
+      // filtered set so it's obvious which cards are currently active
+      // for printing. The user can then click individual chips to refine.
+      const nextFiltered = filterCardsByTags(cards, next)
+      setSelectedIds(new Set(nextFiltered.map(c => c.id)))
       return next
     })
   }
@@ -245,18 +281,7 @@ function App() {
 
           <TeamSelector onSwitch={() => setPickerOpen(true)} />
 
-          {/* Tag filters */}
-          <div className="tag-filters">
-            {ALL_TAGS.map(tag => (
-              <button
-                key={tag}
-                className={`tag-filter-btn ${activeTags.has(tag) ? 'tag-filter-btn--on' : ''}`}
-                onClick={() => toggleTag(tag)}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
+          <span className="toolbar-spacer" aria-hidden />
 
           <button
             className="new-exercise-toolbar-btn"
@@ -276,7 +301,14 @@ function App() {
         </div>
       </div>
 
-      {/* ── Selection bar ────────────────────────────────────────────── */}
+      {/* ── Filter ───────────────────────────────────────────────────── */}
+      <FilterBar
+        tagGroups={TAG_GROUPS}
+        activeTags={activeTags}
+        onToggleTag={toggleTag}
+      />
+
+      {/* ── Per-card selection chips ─────────────────────────────────── */}
       <SelectionBar
         cards={filteredCards}
         selectedIds={selectedIds}
