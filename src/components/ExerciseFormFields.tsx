@@ -1,7 +1,14 @@
 import type { ExerciseFields } from '../utils/cardMarkdown'
 import './ExerciseFormFields.css'
 
-const ALL_TAGS = ['Klubbteknik', 'Rörlighet', 'Parövningar', 'Individuella'] as const
+// Same mutually-exclusive groups as the FilterBar — Klubbteknik vs Rörlighet
+// is one axis (klubbteknik = a card with a stick, rörlighet = bodyweight);
+// Parövningar vs Individuella is the other (paired vs solo). A card can't
+// be both within an axis, so we render each group as a segmented control.
+const TAG_GROUPS = [
+  ['Klubbteknik', 'Rörlighet'],
+  ['Parövningar', 'Individuella'],
+] as const
 
 const MAX_TIPS = 4
 
@@ -36,7 +43,17 @@ export default function ExerciseFormFields({ fields, onChange, derivedId }: Prop
 
   function toggleTag(tag: string) {
     const has = fields.tags.includes(tag)
-    patch('tags', has ? fields.tags.filter(t => t !== tag) : [...fields.tags, tag])
+    if (has) {
+      patch('tags', fields.tags.filter(t => t !== tag))
+      return
+    }
+    // Activating a new tag — clear the rest of its group first so only one
+    // option per axis is ever active.
+    const group = TAG_GROUPS.find((g) => (g as readonly string[]).includes(tag))
+    const cleared = group
+      ? fields.tags.filter((t) => !(group as readonly string[]).includes(t))
+      : fields.tags
+    patch('tags', [...cleared, tag])
   }
 
   return (
@@ -142,20 +159,25 @@ export default function ExerciseFormFields({ fields, onChange, derivedId }: Prop
 
       <div className="exercise-form-row exercise-form-row--full">
         <span className="exercise-form-label">Taggar</span>
-        <div className="exercise-form-tags">
-          {ALL_TAGS.map((tag) => {
-            const on = fields.tags.includes(tag)
-            return (
-              <button
-                key={tag}
-                type="button"
-                className={`exercise-form-tag${on ? ' exercise-form-tag--on' : ''}`}
-                onClick={() => toggleTag(tag)}
-              >
-                {tag}
-              </button>
-            )
-          })}
+        <div className="exercise-form-tag-groups">
+          {TAG_GROUPS.map((group, gi) => (
+            <div key={gi} className="exercise-form-tag-group" role="group">
+              {group.map((tag) => {
+                const on = fields.tags.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={`exercise-form-tag-btn${on ? ' exercise-form-tag-btn--on' : ''}`}
+                    onClick={() => toggleTag(tag)}
+                    aria-pressed={on}
+                  >
+                    {tag}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
