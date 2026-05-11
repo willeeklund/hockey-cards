@@ -29,7 +29,7 @@ TAG             := $(GIT_SHA)
 REVISION_SUFFIX := $(GIT_SHA)-$(TIMESTAMP)
 LATEST_IMAGE := $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest
 
-.PHONY: manual-deploy acr-login build-push update-container-app pull-content url logs help
+.PHONY: manual-deploy acr-login build-push update-container-app pull-content push-content url logs help
 
 manual-deploy: acr-login build-push update-container-app  ## Full pipeline: log in → build & push → roll new revision
 
@@ -64,20 +64,35 @@ update-container-app:  ## Roll a new revision (suffix = git-sha + timestamp)
 	  --output table
 
 # The app stores both uploaded images and exercise markdown under public/ in
-# the blob container. `pull-content` brings both back to your local working
-# tree so you can decide what to commit for persistence.
-PULL_PATTERN := $(if $(TEAM),public/exercise_images/$(TEAM)/*,public/*)
+# the blob container. `pull-content` brings them down to your local tree;
+# `push-content` is the inverse — useful when you've committed new content
+# locally and want the cloud to start serving it without a redeploy. Both
+# share the same glob pattern so an optional `TEAM=<id>` limits the sync
+# to one team's images.
+SYNC_PATTERN := $(if $(TEAM),public/exercise_images/$(TEAM)/*,public/*)
 
 pull-content:  ## Pull images + content from blob storage → public/ (optional: TEAM=<id> to limit images to one team)
-	@echo "→ Downloading blobs matching '$(PULL_PATTERN)' from $(STORAGE_ACCOUNT)/$(STORAGE_CONTAINER)"
+	@echo "→ Downloading blobs matching '$(SYNC_PATTERN)' from $(STORAGE_ACCOUNT)/$(STORAGE_CONTAINER)"
 	@az storage blob download-batch \
 	  --account-name $(STORAGE_ACCOUNT) \
 	  --account-key "$$(az keyvault secret show --vault-name $(KEY_VAULT) --name storage-account-key --query value -o tsv)" \
 	  --source $(STORAGE_CONTAINER) \
 	  --destination . \
-	  --pattern '$(PULL_PATTERN)' \
+	  --pattern '$(SYNC_PATTERN)' \
 	  --output none
 	@echo "→ Done. Run 'git status public/' to review what's new or changed and pick what to commit."
+
+push-content:  ## Push local public/ files up to blob storage (optional: TEAM=<id> to limit images to one team). Overwrites cloud versions.
+	@echo "→ Uploading local files matching '$(SYNC_PATTERN)' → $(STORAGE_ACCOUNT)/$(STORAGE_CONTAINER)"
+	@az storage blob upload-batch \
+	  --account-name $(STORAGE_ACCOUNT) \
+	  --account-key "$$(az keyvault secret show --vault-name $(KEY_VAULT) --name storage-account-key --query value -o tsv)" \
+	  --destination $(STORAGE_CONTAINER) \
+	  --source . \
+	  --pattern '$(SYNC_PATTERN)' \
+	  --overwrite \
+	  --output none
+	@echo "→ Done. The Container App will see the new files on the next request (no redeploy needed)."
 
 url:  ## Print the public Container App URL
 	@az containerapp show \
