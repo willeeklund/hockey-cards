@@ -23,6 +23,18 @@ export default function TeamPicker({ onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [dismissible, onClose])
 
+  // Lock body scroll while the modal is mounted. Without this iOS Safari
+  // will happily scroll the page underneath when the user tries to scroll
+  // inside the modal, especially in landscape where the modal is taller
+  // than the viewport.
+  useEffect(() => {
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = original
+    }
+  }, [])
+
   function handleBackdrop(e: React.MouseEvent<HTMLDivElement>) {
     if (dismissible && e.target === e.currentTarget) onClose!()
   }
