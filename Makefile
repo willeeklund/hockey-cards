@@ -71,18 +71,22 @@ update-container-app:  ## Roll a new revision (suffix = git-sha + timestamp)
 # to one team's images.
 SYNC_PATTERN := $(if $(TEAM),public/exercise_images/$(TEAM)/*,public/*)
 
-pull-content:  ## Pull images + content from blob storage → public/ (optional: TEAM=<id> to limit images to one team)
-	@echo "→ Downloading blobs matching '$(SYNC_PATTERN)' from $(STORAGE_ACCOUNT)/$(STORAGE_CONTAINER)"
+pull-content:  ## Pull images + content from blob storage → public/, overwriting local files (optional: TEAM=<id> to limit images to one team)
+	@find public -name .DS_Store -delete 2>/dev/null || true
+	@echo "→ Downloading blobs matching '$(SYNC_PATTERN)' from $(STORAGE_ACCOUNT)/$(STORAGE_CONTAINER) (overwriting local)"
 	@az storage blob download-batch \
 	  --account-name $(STORAGE_ACCOUNT) \
 	  --account-key "$$(az keyvault secret show --vault-name $(KEY_VAULT) --name storage-account-key --query value -o tsv)" \
 	  --source $(STORAGE_CONTAINER) \
 	  --destination . \
 	  --pattern '$(SYNC_PATTERN)' \
+	  --overwrite \
 	  --output none
-	@echo "→ Done. Run 'git status public/' to review what's new or changed and pick what to commit."
+	@find public -name .DS_Store -delete 2>/dev/null || true
+	@echo "→ Done. Run 'git status public/' to review what changed and pick what to commit."
 
 push-content:  ## Push local public/ files up to blob storage (optional: TEAM=<id> to limit images to one team). Overwrites cloud versions.
+	@find public -name .DS_Store -delete 2>/dev/null || true
 	@echo "→ Uploading local files matching '$(SYNC_PATTERN)' → $(STORAGE_ACCOUNT)/$(STORAGE_CONTAINER)"
 	@az storage blob upload-batch \
 	  --account-name $(STORAGE_ACCOUNT) \
