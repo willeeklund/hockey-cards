@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import type { ExerciseFields } from '../utils/cardMarkdown'
 import './ExerciseFormFields.css'
 
@@ -162,18 +163,22 @@ export default function ExerciseFormFields({ fields, onChange, derivedId }: Prop
         <div className="exercise-form-tag-groups">
           {TAG_GROUPS.map((group, gi) => (
             <div key={gi} className="exercise-form-tag-group" role="group">
-              {group.map((tag) => {
+              {group.map((tag, i) => {
                 const on = fields.tags.includes(tag)
                 return (
-                  <button
-                    key={tag}
-                    type="button"
-                    className={`exercise-form-tag-btn${on ? ' exercise-form-tag-btn--on' : ''}`}
-                    onClick={() => toggleTag(tag)}
-                    aria-pressed={on}
-                  >
-                    {tag}
-                  </button>
+                  <Fragment key={tag}>
+                    {i > 0 && (
+                      <span className="exercise-form-tag-divider" aria-hidden />
+                    )}
+                    <button
+                      type="button"
+                      className={`exercise-form-tag-btn${on ? ' exercise-form-tag-btn--on' : ''}`}
+                      onClick={() => toggleTag(tag)}
+                      aria-pressed={on}
+                    >
+                      {tag}
+                    </button>
+                  </Fragment>
                 )
               })}
             </div>

@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import './FilterBar.css'
 
 type Props = {
@@ -25,18 +26,22 @@ export default function FilterBar({ tagGroups, activeTags, onToggleTag }: Props)
         <div className="filter-bar-groups">
           {tagGroups.map((group, gi) => (
             <div key={gi} className="filter-bar-group" role="group">
-              {group.map((tag) => {
+              {group.map((tag, i) => {
                 const on = activeTags.has(tag)
                 return (
-                  <button
-                    key={tag}
-                    type="button"
-                    className={`filter-bar-group-btn${on ? ' filter-bar-group-btn--on' : ''}`}
-                    onClick={() => onToggleTag(tag)}
-                    aria-pressed={on}
-                  >
-                    {tag}
-                  </button>
+                  <Fragment key={tag}>
+                    {i > 0 && (
+                      <span className="filter-bar-group-divider" aria-hidden />
+                    )}
+                    <button
+                      type="button"
+                      className={`filter-bar-group-btn${on ? ' filter-bar-group-btn--on' : ''}`}
+                      onClick={() => onToggleTag(tag)}
+                      aria-pressed={on}
+                    >
+                      {tag}
+                    </button>
+                  </Fragment>
                 )
               })}
             </div>

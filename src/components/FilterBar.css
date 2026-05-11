@@ -99,3 +99,14 @@
     text-align: center;
   }
 }
+
+/* Thin vertical divider between the two options in a group — signals
+   that the buttons are alternatives in the same axis. Short (not full
+   height) so it reads as a separator, not a wall. */
+.filter-bar-group-divider {
+  width: 1px;
+  align-self: center;
+  height: 1.1rem;
+  background: rgba(15, 23, 42, 0.2);
+  flex-shrink: 0;
+}

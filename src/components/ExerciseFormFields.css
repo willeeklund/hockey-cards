@@ -198,3 +198,14 @@
   background: #1e40af;
   color: #fff;
 }
+
+/* Thin vertical divider between the two options in a tag group —
+   matches the FilterBar so users see the same "two alternatives,
+   pick one" pattern in both places. */
+.exercise-form-tag-divider {
+  width: 1px;
+  align-self: center;
+  height: 1.1rem;
+  background: rgba(15, 23, 42, 0.2);
+  flex-shrink: 0;
+}
