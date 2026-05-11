@@ -45,7 +45,40 @@ const apiPlugin = {
   name: 'cards-dev-api',
   configureServer(server: any) {
     const contentDir = path.join(process.cwd(), 'public', 'content');
+    const swaggerIndex = path.join(process.cwd(), 'public', 'swagger', 'index.html');
     const storage = getStorage();
+
+    // GET /health — mirror the production Express endpoint so probes (and
+    // curl from the developer) get the same JSON. Without this, Vite's SPA
+    // fallback ships the React index.html instead.
+    server.middlewares.use((req: any, res: any, next: any) => {
+      if (req.method === 'GET' && (req.url ?? '').split('?')[0] === '/health') {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(JSON.stringify({ status: 'ok', storage: storage.backend }));
+        return;
+      }
+      next();
+    });
+
+    // GET /swagger/ — serve the Swagger UI page directly. Vite serves the
+    // file at /swagger/index.html out of public/, but the bare directory
+    // URL falls through to the SPA fallback. Serving the bytes here
+    // preserves the /swagger/ URL in the browser.
+    server.middlewares.use((req: any, res: any, next: any) => {
+      const urlPath = (req.url ?? '').split('?')[0];
+      if (req.method === 'GET' && (urlPath === '/swagger' || urlPath === '/swagger/')) {
+        try {
+          const html = fs.readFileSync(swaggerIndex, 'utf8');
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.end(html);
+          return;
+        } catch {
+          // public/swagger/index.html is committed — but be defensive.
+        }
+      }
+      next();
+    });
 
     // POST /api/save-tags — dev-only, edits public/content/<id>.md in place
     server.middlewares.use(

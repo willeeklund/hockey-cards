@@ -24,6 +24,24 @@ const port = Number(process.env.PORT) || 3000;
 const storage = getStorage();
 
 // ── Health (unauthenticated, mounted before auth) ────────────────────
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     summary: Liveness probe
+ *     description: Used by Container Apps readiness/liveness probes. Always unauthenticated.
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Service is up
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: ok }
+ *                 storage: { type: string, enum: [local, blob] }
+ */
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', storage: storage.backend });
 });
@@ -41,6 +59,37 @@ const CONTENT_FILENAME = /^[\w-]+\.md$/i;
 const ID_PATTERN = /^[\w-]+$/;
 
 // ── API: upload image ────────────────────────────────────────────────
+/**
+ * @openapi
+ * /api/upload:
+ *   post:
+ *     summary: Upload an exercise image
+ *     description: Saves a base64-encoded image at `public/exercise_images/<team>/<filename>` in the storage backend.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [team, filename, data]
+ *             properties:
+ *               team: { type: string, example: ikgota-team16 }
+ *               filename: { type: string, example: cykla.jpg, description: 'Must match `<name>.<jpg|jpeg|png|webp|gif>`.' }
+ *               data: { type: string, description: 'Base64 data URL or raw base64 string.' }
+ *     responses:
+ *       200:
+ *         description: Image stored
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok: { type: boolean, enum: [true] }
+ *                 path: { type: string, example: /exercise_images/ikgota-team16/cykla.jpg }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       500: { $ref: '#/components/responses/ServerError' }
+ */
 app.post('/api/upload', async (req: Request, res: Response) => {
   try {
     const { team, filename, data } = req.body ?? {};
@@ -64,6 +113,33 @@ app.post('/api/upload', async (req: Request, res: Response) => {
 });
 
 // ── API: save crop metadata JSON ─────────────────────────────────────
+/**
+ * @openapi
+ * /api/save-crop:
+ *   post:
+ *     summary: Save per-card image crop metadata
+ *     description: Persists the user's crop (pan + zoom) for one exercise card at `public/exercise_images/<team>/<id>.json`.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [team, id, crop]
+ *             properties:
+ *               team: { type: string, example: ikgota-team16 }
+ *               id: { type: string, example: cykla }
+ *               crop: { $ref: '#/components/schemas/Crop' }
+ *     responses:
+ *       200:
+ *         description: Crop stored
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Ok' }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       500: { $ref: '#/components/responses/ServerError' }
+ */
 app.post('/api/save-crop', async (req: Request, res: Response) => {
   try {
     const { team, id, crop } = req.body ?? {};
@@ -83,6 +159,27 @@ app.post('/api/save-crop', async (req: Request, res: Response) => {
 });
 
 // ── API: list exercise content (markdown files) ──────────────────────
+/**
+ * @openapi
+ * /api/content:
+ *   get:
+ *     summary: List exercise IDs
+ *     description: Returns every exercise id currently in `public/content/`. Cache-Control is `no-store` so the list always reflects the storage backend.
+ *     responses:
+ *       200:
+ *         description: List of exercise IDs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ids:
+ *                   type: array
+ *                   items: { type: string }
+ *                   example: [axel-mot-axel, balans-narkamp, cykla]
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       500: { $ref: '#/components/responses/ServerError' }
+ */
 app.get('/api/content', async (_req: Request, res: Response) => {
   try {
     const keys = await storage.list(CONTENT_PREFIX);
@@ -102,6 +199,38 @@ app.get('/api/content', async (_req: Request, res: Response) => {
 });
 
 // ── API: create new exercise (writes a markdown file) ────────────────
+/**
+ * @openapi
+ * /api/content:
+ *   post:
+ *     summary: Create a new exercise
+ *     description: Writes a new markdown file at `public/content/<id>.md`. Refuses to overwrite an existing exercise.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [id, markdown]
+ *             properties:
+ *               id: { type: string, example: tahavningar, description: 'Kebab-case id derived from the title.' }
+ *               markdown: { type: string, description: 'Full markdown including YAML frontmatter (parsed by parseCard).' }
+ *     responses:
+ *       200:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok: { type: boolean, enum: [true] }
+ *                 id: { type: string }
+ *                 path: { type: string, example: /content/tahavningar.md }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       409: { $ref: '#/components/responses/Conflict' }
+ *       500: { $ref: '#/components/responses/ServerError' }
+ */
 app.post('/api/content', async (req: Request, res: Response) => {
   try {
     const { id, markdown } = req.body ?? {};
@@ -124,6 +253,43 @@ app.post('/api/content', async (req: Request, res: Response) => {
 });
 
 // ── API: update an existing exercise ─────────────────────────────────
+/**
+ * @openapi
+ * /api/content/{id}:
+ *   put:
+ *     summary: Update an existing exercise
+ *     description: Overwrites `public/content/<id>.md`. Refuses to create new exercises this way — use POST /api/content for that.
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema: { type: string }
+ *         example: cykla
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [markdown]
+ *             properties:
+ *               markdown: { type: string, description: 'Full markdown including YAML frontmatter.' }
+ *     responses:
+ *       200:
+ *         description: Updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok: { type: boolean, enum: [true] }
+ *                 id: { type: string }
+ *                 path: { type: string }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       404: { $ref: '#/components/responses/NotFound' }
+ *       500: { $ref: '#/components/responses/ServerError' }
+ */
 app.put('/api/content/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -153,6 +319,33 @@ app.put('/api/content/:id', async (req: Request, res: Response) => {
 app.use(express.static(distDir, { fallthrough: true }));
 
 // ── Serve uploaded images from the storage backend ───────────────────
+/**
+ * @openapi
+ * /exercise_images/{team}/{filename}:
+ *   get:
+ *     summary: Serve an uploaded exercise image or crop JSON
+ *     description: Falls through static file serving first (so committed assets win), then reads from the storage backend (blob in prod).
+ *     parameters:
+ *       - name: team
+ *         in: path
+ *         required: true
+ *         schema: { type: string }
+ *       - name: filename
+ *         in: path
+ *         required: true
+ *         schema: { type: string }
+ *         description: Either `<name>.<jpg|jpeg|png|webp|gif>` (image) or `<id>.json` (crop metadata).
+ *     responses:
+ *       200:
+ *         description: Image or JSON bytes
+ *         content:
+ *           image/*:
+ *             schema: { type: string, format: binary }
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Crop' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       404: { $ref: '#/components/responses/NotFound' }
+ */
 app.get(
   '/exercise_images/:team/:filename',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -174,6 +367,27 @@ app.get(
 );
 
 // ── Serve markdown content from the storage backend ──────────────────
+/**
+ * @openapi
+ * /content/{filename}:
+ *   get:
+ *     summary: Fetch an exercise markdown file
+ *     description: Falls through static file serving first; otherwise reads `public/content/<filename>` from the storage backend. Cache-Control no-store, so edits show up on the next request.
+ *     parameters:
+ *       - name: filename
+ *         in: path
+ *         required: true
+ *         schema: { type: string }
+ *         example: cykla.md
+ *     responses:
+ *       200:
+ *         description: Markdown bytes
+ *         content:
+ *           text/markdown:
+ *             schema: { type: string }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       404: { $ref: '#/components/responses/NotFound' }
+ */
 app.get(
   '/content/:filename',
   async (req: Request, res: Response, next: NextFunction) => {
