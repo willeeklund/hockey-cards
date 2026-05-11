@@ -9,6 +9,7 @@ import {
   serializeCard,
   type ExerciseFields,
 } from '../utils/cardMarkdown'
+import { trackEvent } from '../utils/analytics'
 import './CardEditModal.css'
 
 const DEFAULT_XFORM = { x: 0, y: 0, scale: 1 }
@@ -134,6 +135,7 @@ export default function CardEditModal({ card, transform, onTransformChange, onCl
           body: JSON.stringify({ team: teamId, filename: `${card.id}.jpg`, data: pendingUpload!.base64 }),
         })
         if (!res.ok) throw new Error('Kunde inte ladda upp bilden')
+        trackEvent('ImageUploaded', { teamId, cardId: card.id })
       }
       if (cropDirty && teamId) {
         const res = await fetch('/api/save-crop', {
@@ -158,6 +160,10 @@ export default function CardEditModal({ card, transform, onTransformChange, onCl
           body: JSON.stringify({ markdown: serializeCard(sanitised) }),
         })
         if (!res.ok) throw new Error('Kunde inte spara övningens uppgifter')
+        trackEvent('CardTextUpdated', {
+          teamId: teamId ?? null,
+          cardId: card.id,
+        })
       }
       setSaveStatus('success')
       if (onSaved) await onSaved()

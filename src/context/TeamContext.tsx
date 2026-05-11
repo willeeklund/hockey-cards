@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { TEAMS, type Team } from '../config/teams';
+import { trackEvent } from '../utils/analytics';
 
 const STORAGE_KEY = 'gota-off-ice:team';
 
@@ -39,6 +40,14 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       }
     } catch {
       // localStorage may be unavailable (private mode etc.) — ignore.
+    }
+  }, [teamId]);
+
+  // Track every team selection (including the initial restore from
+  // localStorage on page load) so we can see which teams visit the app.
+  useEffect(() => {
+    if (teamId) {
+      trackEvent('TeamSelected', { teamId });
     }
   }, [teamId]);
 

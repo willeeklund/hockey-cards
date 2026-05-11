@@ -52,6 +52,31 @@ app.use(basicAuth());
 // JSON bodies up to 10 MiB (image uploads come in as base64 data URLs).
 app.use(express.json({ limit: '10mb' }));
 
+// ── API: runtime config bag exposed to the SPA ───────────────────────
+/**
+ * @openapi
+ * /api/config:
+ *   get:
+ *     summary: Runtime config bag for the SPA
+ *     description: Non-sensitive runtime values the frontend needs at startup. Currently only the Application Insights connection string used for client-side telemetry — empty string when telemetry is not configured (e.g. local dev with APPINSIGHTS_CONNECTION_STRING unset).
+ *     responses:
+ *       200:
+ *         description: Config bag
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 appInsightsConnectionString: { type: string }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ */
+app.get('/api/config', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    appInsightsConnectionString: process.env.APPINSIGHTS_CONNECTION_STRING ?? '',
+  });
+});
+
 const TEAM_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/i;
 const IMAGE_FILENAME = /^[\w-]+\.(jpg|jpeg|png|webp|gif)$/i;
 const META_FILENAME = /^[\w-]+\.json$/i;

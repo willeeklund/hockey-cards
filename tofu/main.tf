@@ -56,6 +56,21 @@ resource "azurerm_container_app_environment" "this" {
   tags                       = var.tags
 }
 
+# Application Insights — workspace-based, sharing the Log Analytics
+# workspace above. Used for client-side pageviews + custom events
+# (team selection, card edits, image uploads, new exercises). The
+# connection string is exposed to the SPA via /api/config; it's not
+# treated as a secret because App Insights connection strings end up
+# in the browser bundle anyway.
+resource "azurerm_application_insights" "this" {
+  name                = "ai-${local.app_name}-${var.environment}"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  workspace_id        = azurerm_log_analytics_workspace.this.id
+  application_type    = "web"
+  tags                = var.tags
+}
+
 # ---------------------------------------------------------------------------
 # Container Registry
 # ---------------------------------------------------------------------------
@@ -294,6 +309,14 @@ resource "azurerm_container_app" "this" {
       env {
         name        = "BASIC_AUTH_PASSWORD"
         secret_name = "basic-auth-password"
+      }
+      env {
+        name = "APPINSIGHTS_CONNECTION_STRING"
+        # The connection string is provider-marked sensitive, but its
+        # contents (instrumentation key + endpoints) end up in the browser
+        # JS bundle anyway via /api/config — unwrap so we can pass it as a
+        # plain env value.
+        value = nonsensitive(azurerm_application_insights.this.connection_string)
       }
 
       dynamic "env" {

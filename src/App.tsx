@@ -277,7 +277,7 @@ function App() {
       <div className="toolbar no-print">
         <div className="toolbar-inner">
           <span className="toolbar-logo">🏒</span>
-          <span className="toolbar-title">Hockey Övningskort</span>
+          <span className="toolbar-title">Hockey Off-ice övningskort</span>
 
           <TeamSelector onSwitch={() => setPickerOpen(true)} />
 

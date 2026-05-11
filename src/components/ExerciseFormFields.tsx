@@ -48,7 +48,7 @@ export default function ExerciseFormFields({ fields, onChange, derivedId }: Prop
           className="exercise-form-input"
           value={fields.title}
           onChange={(e) => patch('title', e.target.value)}
-          placeholder="Tåhävningar"
+          placeholder="Namn på övningen"
         />
       </label>
 

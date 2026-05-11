@@ -80,6 +80,19 @@ const apiPlugin = {
       next();
     });
 
+    // GET /api/config — runtime config bag for the SPA. In dev there's
+    // typically no telemetry connection string, so the SPA initialises
+    // App Insights as a no-op.
+    server.middlewares.use('/api/config', (req: any, res: any, next: any) => {
+      if (req.method !== 'GET') return next();
+      const trailing = (req.url ?? '/').split('?')[0];
+      if (trailing !== '/' && trailing !== '') return next();
+      res.setHeader('Cache-Control', 'no-store');
+      sendJson(res, 200, {
+        appInsightsConnectionString: process.env.APPINSIGHTS_CONNECTION_STRING ?? '',
+      });
+    });
+
     // POST /api/save-tags — dev-only, edits public/content/<id>.md in place
     server.middlewares.use(
       '/api/save-tags',
