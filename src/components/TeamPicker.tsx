@@ -56,11 +56,40 @@ export default function TeamPicker({ onClose }: Props) {
           <span aria-hidden>🏒</span> Välj ditt lag
         </h1>
         <p className="team-picker-intro">
-          Välj vilket lag du tillhör för att kunna ladda upp bilder på dina egna spelare.
+          En kortlek med övningar för hockey-träning utanför isen. Välj de övningar ni vill göra på er träning, skriv ut korten och laminera dem.
         </p>
+
+        <p className="team-picker-feature">
+          <span className="team-picker-feature-icon" aria-hidden>📸</span>
+          <span>
+            <strong>Egna foton.</strong> När du valt ditt lag kan du ladda upp bilder på era spelare som visar hur övningarna går till — det är roligare för barnen att se sina lagkamrater på korten.
+          </span>
+        </p>
+
+        <p className="team-picker-feature">
+          <span className="team-picker-feature-icon" aria-hidden>✏️</span>
+          <span>
+            <strong>Gemensamma texter.</strong> Övningstexterna delas mellan alla lag. När du ändrar en text påverkar det alla lag.
+          </span>
+        </p>
+
         <p className="team-picker-intro team-picker-intro--muted">
           Vill du bara se exempel? Välj <strong>Team 16</strong> — där har de flesta korten uppladdade bilder.
         </p>
+
+        <aside className="team-picker-signoff">
+          <p>
+            Vi hoppas att ni får glädje av appen! Maila gärna feedback och förslag på förbättringar.
+          </p>
+          <p>
+            Hälsningar <strong>Wille</strong>, lagledare i Team 16
+          </p>
+          <p className="team-picker-contact">
+            <a href="mailto:wille.eklund@gmail.com">wille.eklund@gmail.com</a>
+            <span aria-hidden> · </span>
+            <a href="tel:+46705400425">070-540 04 25</a>
+          </p>
+        </aside>
 
         <div className="team-picker-options">
           {teams.map((t) => {

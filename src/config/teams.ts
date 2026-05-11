@@ -7,6 +7,9 @@ export type Team = {
 };
 
 export const TEAMS: readonly Team[] = [
+  { id: 'ikgota-alag', label: 'IK Göta — A-lag' },
+  { id: 'ikgota-j20', label: 'IK Göta — J20' },
+  { id: 'ikgota-j18', label: 'IK Göta — J18' },
   { id: 'ikgota-team11', label: 'IK Göta — Team 11' },
   { id: 'ikgota-team12', label: 'IK Göta — Team 12' },
   { id: 'ikgota-team13', label: 'IK Göta — Team 13' },

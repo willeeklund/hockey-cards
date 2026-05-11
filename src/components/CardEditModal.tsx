@@ -50,6 +50,10 @@ export default function CardEditModal({ card, transform, onTransformChange, onCl
   const initialFields = useMemo<ExerciseFields>(() => fieldsFromCard(card), [card.id])
   const [fields, setFields] = useState<ExerciseFields>(initialFields)
 
+  // Text-edit is collapsed by default — the modal opens as an "edit just
+  // the photo" tool. Clicking the toggle reveals the shared-content form.
+  const [textEditOpen, setTextEditOpen] = useState(false)
+
   const areaRef = useRef(null)
   const xformRef = useRef(transform)
   xformRef.current = transform
@@ -240,10 +244,35 @@ export default function CardEditModal({ card, transform, onTransformChange, onCl
             </div>
           </div>
 
-          {/* Editable exercise fields */}
-          <div className="modal-fields">
-            <ExerciseFormFields fields={fields} onChange={handleFieldsChange} />
+          {/* Toggle to reveal the (shared-across-teams) text editor. */}
+          <div className="modal-text-edit-toggle">
+            <button
+              type="button"
+              className="modal-text-edit-toggle-btn"
+              onClick={() => setTextEditOpen((open) => !open)}
+              aria-expanded={textEditOpen}
+            >
+              {textEditOpen ? '↑ Stäng textredigering' : '✏️ Redigera texten'}
+            </button>
           </div>
+
+          {/* Shared-text warning + the actual form. Hidden by default so
+              the modal feels like a simple photo-editor until the user
+              opts in to editing the (shared) exercise info. */}
+          {textEditOpen && (
+            <>
+              <div className="modal-shared-warning" role="note">
+                <span className="modal-shared-warning-icon" aria-hidden>👥</span>
+                <span>
+                  <strong>Övningstexterna är gemensamma för alla lag.</strong>{' '}
+                  Ändringar du gör här (titel, syfte, tips, taggar, färg) syns för alla.
+                </span>
+              </div>
+              <div className="modal-fields">
+                <ExerciseFormFields fields={fields} onChange={handleFieldsChange} />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Save action — sticky footer */}
