@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- Build stage: compile both the SPA (vite build) and the server (tsc) ---
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 COPY package*.json tsconfig*.json ./
 RUN npm ci
@@ -25,7 +25,7 @@ RUN printf '{\n  "commit": "%s",\n  "branch": "%s",\n  "buildTime": "%s"\n}\n' \
     "$GIT_COMMIT" "$GIT_BRANCH" "$BUILD_TIME" > dist/client/gitVersion.json
 
 # --- Runtime stage: production deps + compiled server + built SPA ---
-FROM node:22-alpine
+FROM node:24-alpine
 WORKDIR /app
 
 COPY package*.json ./
