@@ -25,6 +25,10 @@ function xformEqual(a, b) {
 type Props = {
   card: { id: string; [key: string]: any }
   transform: { x: number; y: number; scale: number }
+  /** Bumped by App.tsx after every successful refresh — appended to the
+   *  image URL as `?v=<n>` so a freshly uploaded photo replaces the
+   *  browser-cached one. */
+  imageVersion?: number
   onTransformChange: (next: { x: number; y: number; scale: number }) => void
   onClose: () => void
   /** Called after a successful save so the parent can re-fetch the card
@@ -32,7 +36,7 @@ type Props = {
   onSaved?: () => void | Promise<void>
 }
 
-export default function CardEditModal({ card, transform, onTransformChange, onClose, onSaved }: Props) {
+export default function CardEditModal({ card, transform, imageVersion = 0, onTransformChange, onClose, onSaved }: Props) {
   const { teamId, teams, setTeamId } = useTeam()
   const displayTeamId = teamId ?? FALLBACK_TEAM_ID
 
@@ -77,7 +81,9 @@ export default function CardEditModal({ card, transform, onTransformChange, onCl
 
   // Reset the error flag whenever the source URL changes (team switch,
   // file selection, etc.) so the new image gets a fresh chance to load.
-  const imageSrc = pendingUpload?.previewUrl || `/exercise_images/${displayTeamId}/${card.id}.jpg`
+  // The ?v=<n> suffix mirrors what App.tsx does for the printed cards.
+  const versionSuffix = imageVersion > 0 ? `?v=${imageVersion}` : ''
+  const imageSrc = pendingUpload?.previewUrl || `/exercise_images/${displayTeamId}/${card.id}.jpg${versionSuffix}`
   useEffect(() => {
     setImgError(false)
   }, [imageSrc])

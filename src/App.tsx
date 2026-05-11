@@ -121,6 +121,12 @@ function App() {
   const [contentStatus, setContentStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [contentError, setContentError] = useState('')
 
+  // `<img>` elements bypass the fetch() cache options, so when an image is
+  // re-uploaded the URL is identical and the browser serves the previously
+  // loaded bytes. Bump this counter on every non-initial refresh and append
+  // it as `?v=<n>` to image URLs to force a re-fetch only when needed.
+  const [imageVersion, setImageVersion] = useState(0)
+
   // Re-fetch the card list (after create / update / blob-storage edit).
   // Same code path as the initial load; on initial load we also flip the
   // load status to 'ready' so the loading screen goes away.
@@ -130,6 +136,11 @@ function App() {
       loaded.sort((a, b) => primaryTagIndex(a) - primaryTagIndex(b))
       setCards(loaded)
       setContentStatus('ready')
+      if (!opts.initial) {
+        // After a user-triggered save we bump the version so freshly
+        // uploaded images replace the cached ones in <img> elements.
+        setImageVersion((v) => v + 1)
+      }
     } catch (e: any) {
       if (opts.initial) {
         setContentError(e?.message ?? 'Okänt fel')
@@ -180,11 +191,13 @@ function App() {
   }, [selectedIds, editId, activeTags, cards])
 
   // Load saved crops from server for the active (or fallback) team.
+  // Re-runs when imageVersion bumps so a freshly-saved crop is read back
+  // instead of served from the browser cache.
   useEffect(() => {
     let cancelled = false
     Promise.all(
       cards.map(c =>
-        fetch(`/exercise_images/${displayTeamId}/${c.id}.json`)
+        fetch(`/exercise_images/${displayTeamId}/${c.id}.json`, { cache: 'no-store' })
           .then(r => r.ok ? r.json().then(crop => ({ id: c.id, crop })) : null)
           .catch(() => null)
       )
@@ -201,7 +214,7 @@ function App() {
       }
     })
     return () => { cancelled = true }
-  }, [cards, displayTeamId])
+  }, [cards, displayTeamId, imageVersion])
 
   const updateTransform = useCallback((cardId, next) => {
     setTransforms(t => ({ ...t, [cardId]: next }))
@@ -335,6 +348,7 @@ function App() {
                     card={card}
                     index={pageIdx * 6 + i}
                     transform={getTransform(card.id)}
+                    imageVersion={imageVersion}
                     onEdit={() => setEditId(card.id)}
                   />
                 ))}
@@ -356,6 +370,7 @@ function App() {
         <CardEditModal
           card={editCard}
           transform={getTransform(editCard.id)}
+          imageVersion={imageVersion}
           onTransformChange={next => updateTransform(editCard.id, next)}
           onClose={() => setEditId(null)}
           onSaved={() => refreshCards()}

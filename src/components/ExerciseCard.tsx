@@ -9,12 +9,15 @@ function isEdited(xform) {
   return Math.abs(xform.x) > 0.001 || Math.abs(xform.y) > 0.001 || Math.abs(xform.scale - 1) > 0.001
 }
 
-export default function ExerciseCard({ card, index = 0, transform = { x: 0, y: 0, scale: 1 }, onEdit }) {
+export default function ExerciseCard({ card, index = 0, transform = { x: 0, y: 0, scale: 1 }, imageVersion = 0, onEdit }) {
   const { teamId } = useTeam()
   const [imgError, setImgError] = useState(false)
 
   const color = card.color || FALLBACK_COLORS[index % FALLBACK_COLORS.length]
-  const imageSrc = `/exercise_images/${teamId ?? FALLBACK_TEAM_ID}/${card.id}.jpg`
+  // ?v=<n> busts <img> caches after an upload — bumped by App.tsx every
+  // time refreshCards runs in response to a user save.
+  const versionSuffix = imageVersion > 0 ? `?v=${imageVersion}` : ''
+  const imageSrc = `/exercise_images/${teamId ?? FALLBACK_TEAM_ID}/${card.id}.jpg${versionSuffix}`
   const hasImage = !imgError
   const edited = isEdited(transform)
 
