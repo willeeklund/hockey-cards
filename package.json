@@ -6,6 +6,7 @@
     "dev": "node scripts/generate-openapi.mjs && vite",
     "build": "node scripts/generate-openapi.mjs && vite build && tsc -p tsconfig.server.json",
     "build:server": "tsc -p tsconfig.server.json",
+    "build:static": "node scripts/generate-content-index.mjs && vite build --config vite.static.config.ts --mode github-pages-static && node scripts/prune-static-images.mjs",
     "openapi": "node scripts/generate-openapi.mjs",
     "preview": "vite preview",
     "start": "node dist/server/index.js",

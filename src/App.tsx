@@ -33,7 +33,9 @@ async function fetchAllCards() {
   // Bypass any browser cache — the list and each .md file change every
   // time a user creates or edits an exercise, and we re-fetch immediately
   // after those mutations.
-  const listRes = await fetch('/api/content', { cache: 'no-store' })
+  const listRes = import.meta.env.VITE_READ_ONLY
+    ? await fetch('/content-index.json', { cache: 'no-store' })
+    : await fetch('/api/content', { cache: 'no-store' })
   if (!listRes.ok) throw new Error(`HTTP ${listRes.status} från /api/content`)
   const { ids } = (await listRes.json()) as { ids: string[] }
 
@@ -302,14 +304,16 @@ function App() {
 
           <span className="toolbar-spacer" aria-hidden />
 
-          <button
-            className="new-exercise-toolbar-btn"
-            onClick={() => setNewExerciseOpen(true)}
-            title="Skapa en ny övning"
-          >
-            <span className="btn-icon" aria-hidden>✨</span>
-            <span className="btn-label">Ny övning</span>
-          </button>
+          {!import.meta.env.VITE_READ_ONLY && (
+            <button
+              className="new-exercise-toolbar-btn"
+              onClick={() => setNewExerciseOpen(true)}
+              title="Skapa en ny övning"
+            >
+              <span className="btn-icon" aria-hidden>✨</span>
+              <span className="btn-label">Ny övning</span>
+            </button>
+          )}
 
           <button
             className="print-btn"
@@ -355,7 +359,7 @@ function App() {
                     index={pageIdx * 6 + i}
                     transform={getTransform(card.id)}
                     imageVersion={imageVersion}
-                    onEdit={() => setEditId(card.id)}
+                    onEdit={import.meta.env.VITE_READ_ONLY ? undefined : () => setEditId(card.id)}
                   />
                 ))}
               </div>
