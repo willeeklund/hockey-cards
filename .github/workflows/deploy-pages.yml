@@ -19,6 +19,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Unlock git-crypt
+        # public/exercise_images/** is git-crypt-encrypted in this (public)
+        # repo — checkout alone leaves the encrypted ciphertext on disk.
+        # GIT_CRYPT_KEY is the base64 output of `git-crypt export-key`,
+        # stored as a repo secret (Settings → Secrets and variables →
+        # Actions). The keyfile lives only on the ephemeral runner.
+        run: |
+          sudo apt-get update && sudo apt-get install -y git-crypt
+          echo "${{ secrets.GIT_CRYPT_KEY }}" | base64 -d > /tmp/git-crypt-key
+          git-crypt unlock /tmp/git-crypt-key
+          rm /tmp/git-crypt-key
       - uses: actions/setup-node@v4
         with:
           node-version: 20
