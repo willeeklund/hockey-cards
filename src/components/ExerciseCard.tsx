@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTeam } from '../context/TeamContext'
 import { FALLBACK_TEAM_ID } from '../config/teams'
+import { assetUrl } from '../utils/assetUrl'
 import './ExerciseCard.css'
 
 const FALLBACK_COLORS = ['#FF6B35', '#00B4D8', '#9B5DE5', '#F15BB5']
@@ -17,7 +18,7 @@ export default function ExerciseCard({ card, index = 0, transform = { x: 0, y: 0
   // ?v=<n> busts <img> caches after an upload — bumped by App.tsx every
   // time refreshCards runs in response to a user save.
   const versionSuffix = imageVersion > 0 ? `?v=${imageVersion}` : ''
-  const imageSrc = `/exercise_images/${teamId ?? FALLBACK_TEAM_ID}/${card.id}.jpg${versionSuffix}`
+  const imageSrc = assetUrl(`/exercise_images/${teamId ?? FALLBACK_TEAM_ID}/${card.id}.jpg${versionSuffix}`)
   const hasImage = !imgError
   const edited = isEdited(transform)
 
@@ -33,7 +34,7 @@ export default function ExerciseCard({ card, index = 0, transform = { x: 0, y: 0
       <header className="card-header">
         <span className="card-emoji">{card.emoji || '⭐'}</span>
         <h2 className="card-title">{card.title || 'Övning'}</h2>
-        <img src="/gota-logga.png" alt="IK Göta" className="card-team-logo" />
+        <img src={assetUrl('/gota-logga.png')} alt="IK Göta" className="card-team-logo" />
       </header>
 
       {/* Image area — click to open edit modal */}

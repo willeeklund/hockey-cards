@@ -10,6 +10,7 @@ import NewExerciseModal from './components/NewExerciseModal'
 import { useTeam } from './context/TeamContext'
 import { FALLBACK_TEAM_ID } from './config/teams'
 import { parseCard } from './utils/parseCard'
+import { assetUrl } from './utils/assetUrl'
 import './App.css'
 
 // Filter dimensions, each one a mutually-exclusive group: a card is either
@@ -34,7 +35,7 @@ async function fetchAllCards() {
   // time a user creates or edits an exercise, and we re-fetch immediately
   // after those mutations.
   const listRes = import.meta.env.VITE_READ_ONLY
-    ? await fetch('/content-index.json', { cache: 'no-store' })
+    ? await fetch(assetUrl('/content-index.json'), { cache: 'no-store' })
     : await fetch('/api/content', { cache: 'no-store' })
   if (!listRes.ok) throw new Error(`HTTP ${listRes.status} från /api/content`)
   const { ids } = (await listRes.json()) as { ids: string[] }
@@ -42,7 +43,7 @@ async function fetchAllCards() {
   const parsed = await Promise.all(
     ids.map(async (id) => {
       try {
-        const res = await fetch(`/content/${id}.md`, { cache: 'no-store' })
+        const res = await fetch(assetUrl(`/content/${id}.md`), { cache: 'no-store' })
         if (!res.ok) return null
         const raw = await res.text()
         const { id: parsedId, data } = parseCard(raw, `${id}.md`)
@@ -205,7 +206,7 @@ function App() {
     let cancelled = false
     Promise.all(
       cards.map(c =>
-        fetch(`/exercise_images/${displayTeamId}/${c.id}.json`, { cache: 'no-store' })
+        fetch(assetUrl(`/exercise_images/${displayTeamId}/${c.id}.json`), { cache: 'no-store' })
           .then(r => r.ok ? r.json().then(crop => ({ id: c.id, crop })) : null)
           .catch(() => null)
       )
