@@ -2,7 +2,7 @@ export type Backend = 'local' | 'blob';
 
 /**
  * Generic key/value file storage. Keys are full paths like
- * `public/exercise_images/<team>/<file>.jpg` or `public/content/<id>.md`.
+ * `public/exercise_images/ikgota-team16/<file>.jpg` or `public/content/<id>.md`.
  * The local backend writes them under the project root; the blob backend
  * uses them as blob names directly.
  */

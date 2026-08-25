@@ -7,7 +7,6 @@ import {
   type ExerciseFields,
 } from '../utils/cardMarkdown'
 import { trackEvent } from '../utils/analytics'
-import { useTeam } from '../context/TeamContext'
 import './NewExerciseModal.css'
 
 const EMPTY: ExerciseFields = {
@@ -28,7 +27,6 @@ type Props = {
 }
 
 export default function NewExerciseModal({ existingIds, onClose, onCreated }: Props) {
-  const { teamId } = useTeam()
   const [fields, setFields] = useState<ExerciseFields>(EMPTY)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'error'>('idle')
   const [saveError, setSaveError] = useState('')
@@ -81,10 +79,7 @@ export default function NewExerciseModal({ existingIds, onClose, onCreated }: Pr
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error ?? `HTTP ${res.status}`)
       }
-      trackEvent('ExerciseCreated', {
-        teamId: teamId ?? null,
-        exerciseId: derivedId,
-      })
+      trackEvent('ExerciseCreated', { exerciseId: derivedId })
       await onCreated(derivedId)
       onClose()
     } catch (e: any) {

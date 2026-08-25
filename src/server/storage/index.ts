@@ -11,8 +11,11 @@ export { mimeFromName } from './types.js';
 export const IMAGES_PREFIX = 'public/exercise_images';
 export const CONTENT_PREFIX = 'public/content';
 
-export function imageKey(team: string, filename: string) {
-  return `${IMAGES_PREFIX}/${team}/${filename}`;
+// The app only ever serves/stores images for this one team.
+export const TEAM_ID = 'ikgota-team16';
+
+export function imageKey(filename: string) {
+  return `${IMAGES_PREFIX}/${TEAM_ID}/${filename}`;
 }
 
 export function contentKey(id: string) {

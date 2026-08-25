@@ -38,7 +38,7 @@ npm install
 npm run dev
 ```
 
-Öppna `http://localhost:3000`. Övningar och bilder ligger i `public/content/` respektive `public/exercise_images/<lagmapp>/`. Ingen basic auth lokalt.
+Öppna `http://localhost:3000`. Övningar och bilder ligger i `public/content/` respektive `public/exercise_images/ikgota-team16/`. Ingen basic auth lokalt.
 
 ### Stack
 
@@ -46,7 +46,7 @@ npm run dev
 - **Backend:** Express (Node 24), kör i Azure Container Apps
 - **Lagring:** Azure Blob Storage (bilder + övningstexter)
 - **Auth:** HTTP Basic auth (cloud)
-- **Telemetri:** Application Insights — sidvisningar + custom events (`TeamSelected`, `ImageUploaded`, `CardTextUpdated`, `ExerciseCreated`)
+- **Telemetri:** Application Insights — sidvisningar + custom events (`ImageUploaded`, `CardTextUpdated`, `ExerciseCreated`)
 - **API-docs:** Swagger UI på `/swagger/`
 - **OpenAPI-spec:** Genereras automatiskt från `@openapi`-JSDoc-block via `scripts/generate-openapi.mjs` vid varje `npm run build`
 

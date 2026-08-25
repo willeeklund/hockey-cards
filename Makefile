@@ -29,7 +29,10 @@ TAG             := $(GIT_SHA)
 REVISION_SUFFIX := $(GIT_SHA)-$(TIMESTAMP)
 LATEST_IMAGE := $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest
 
-.PHONY: manual-deploy acr-login build-push update-container-app pull-content push-content url logs help
+.PHONY: dev manual-deploy acr-login build-push update-container-app pull-content push-content url logs help
+
+dev:  ## Run the app locally (npm run dev)
+	npm run dev
 
 manual-deploy: acr-login build-push update-container-app  ## Full pipeline: log in → build & push → roll new revision
 

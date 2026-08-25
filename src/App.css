@@ -286,8 +286,8 @@
 
   .toolbar-title {
     font-size: 0.95rem;
-    /* The title still gets a row to itself when the toolbar wraps; team
-       selector + action buttons end up on the next row. */
+    /* The title still gets a row to itself when the toolbar wraps; the
+       action buttons end up on the next row. */
   }
 
   /* The spacer pushes Ny övning + Skriv ut to the right edge; on really

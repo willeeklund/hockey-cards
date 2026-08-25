@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGestures } from '../hooks/useGestures'
-import { useTeam } from '../context/TeamContext'
-import { FALLBACK_TEAM_ID } from '../config/teams'
+import { TEAM_ID } from '../config/teams'
 import ExerciseFormFields from './ExerciseFormFields'
 import {
   fieldsEqual,
@@ -37,9 +36,6 @@ type Props = {
 }
 
 export default function CardEditModal({ card, transform, imageVersion = 0, onTransformChange, onClose, onSaved }: Props) {
-  const { teamId, teams, setTeamId } = useTeam()
-  const displayTeamId = teamId ?? FALLBACK_TEAM_ID
-
   // Local-only pending edits — nothing is sent to the server until Save.
   const [pendingUpload, setPendingUpload] = useState<{ base64: string; previewUrl: string } | null>(null)
   const [imgError, setImgError] = useState(false)
@@ -79,11 +75,11 @@ export default function CardEditModal({ card, transform, imageVersion = 0, onTra
     }
   }, [pendingUpload])
 
-  // Reset the error flag whenever the source URL changes (team switch,
-  // file selection, etc.) so the new image gets a fresh chance to load.
-  // The ?v=<n> suffix mirrors what App.tsx does for the printed cards.
+  // Reset the error flag whenever the source URL changes (file selection,
+  // etc.) so the new image gets a fresh chance to load. The ?v=<n> suffix
+  // mirrors what App.tsx does for the printed cards.
   const versionSuffix = imageVersion > 0 ? `?v=${imageVersion}` : ''
-  const imageSrc = pendingUpload?.previewUrl || `/exercise_images/${displayTeamId}/${card.id}.jpg${versionSuffix}`
+  const imageSrc = pendingUpload?.previewUrl || `/exercise_images/${TEAM_ID}/${card.id}.jpg${versionSuffix}`
   useEffect(() => {
     setImgError(false)
   }, [imageSrc])
@@ -118,7 +114,6 @@ export default function CardEditModal({ card, transform, imageVersion = 0, onTra
   const cropDirty = !xformEqual(transform, initialTransform)
   const fieldsDirty = !fieldsEqual(fields, initialFields)
   const isDirty = imageDirty || cropDirty || fieldsDirty
-  const teamRequired = imageDirty || cropDirty
 
   // Reset success/error status when the user makes another edit.
   useEffect(() => {
@@ -130,24 +125,23 @@ export default function CardEditModal({ card, transform, imageVersion = 0, onTra
 
   async function handleSave() {
     if (!isDirty || saveStatus === 'saving') return
-    if (teamRequired && !teamId) return
     setSaveStatus('saving')
     setSaveError('')
     try {
-      if (imageDirty && teamId) {
+      if (imageDirty) {
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ team: teamId, filename: `${card.id}.jpg`, data: pendingUpload!.base64 }),
+          body: JSON.stringify({ filename: `${card.id}.jpg`, data: pendingUpload!.base64 }),
         })
         if (!res.ok) throw new Error('Kunde inte ladda upp bilden')
-        trackEvent('ImageUploaded', { teamId, cardId: card.id })
+        trackEvent('ImageUploaded', { cardId: card.id })
       }
-      if (cropDirty && teamId) {
+      if (cropDirty) {
         const res = await fetch('/api/save-crop', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ team: teamId, id: card.id, crop: transform }),
+          body: JSON.stringify({ id: card.id, crop: transform }),
         })
         if (!res.ok) throw new Error('Kunde inte spara beskärningen')
       }
@@ -166,10 +160,7 @@ export default function CardEditModal({ card, transform, imageVersion = 0, onTra
           body: JSON.stringify({ markdown: serializeCard(sanitised) }),
         })
         if (!res.ok) throw new Error('Kunde inte spara övningens uppgifter')
-        trackEvent('CardTextUpdated', {
-          teamId: teamId ?? null,
-          cardId: card.id,
-        })
+        trackEvent('CardTextUpdated', { cardId: card.id })
       }
       setSaveStatus('success')
       if (onSaved) await onSaved()
@@ -301,33 +292,17 @@ export default function CardEditModal({ card, transform, imageVersion = 0, onTra
             )}
           </div>
 
-          {teamRequired && !teamId ? (
-            <label className="modal-upload-pick-team" title="Välj först vilket lag bildändringarna ska sparas för">
-              <span className="modal-upload-pick-label">💾 Spara till lag:</span>
-              <select
-                className="modal-upload-pick-select"
-                value=""
-                onChange={e => { if (e.target.value) setTeamId(e.target.value) }}
-              >
-                <option value="" disabled>Välj lag…</option>
-                {teams.map(t => (
-                  <option key={t.id} value={t.id}>{t.label}</option>
-                ))}
-              </select>
-            </label>
-          ) : (
-            <button
-              className={`modal-btn modal-btn--primary modal-btn--save${
-                saveStatus === 'success' ? ' modal-btn--success'
-                : saveStatus === 'error' ? ' modal-btn--error'
-                : ''
-              }`}
-              onClick={handleSave}
-              disabled={!isDirty || saveStatus === 'saving' || saveStatus === 'success'}
-            >
-              {saveLabel}
-            </button>
-          )}
+          <button
+            className={`modal-btn modal-btn--primary modal-btn--save${
+              saveStatus === 'success' ? ' modal-btn--success'
+              : saveStatus === 'error' ? ' modal-btn--error'
+              : ''
+            }`}
+            onClick={handleSave}
+            disabled={!isDirty || saveStatus === 'saving' || saveStatus === 'success'}
+          >
+            {saveLabel}
+          </button>
         </div>
       </div>
     </div>

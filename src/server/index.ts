@@ -8,6 +8,7 @@ import { dirname, join } from 'node:path';
 import { basicAuth } from './auth.js';
 import {
   CONTENT_PREFIX,
+  TEAM_ID,
   contentKey,
   getStorage,
   imageKey,
@@ -77,7 +78,6 @@ app.get('/api/config', (_req: Request, res: Response) => {
   });
 });
 
-const TEAM_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/i;
 const IMAGE_FILENAME = /^[\w-]+\.(jpg|jpeg|png|webp|gif)$/i;
 const META_FILENAME = /^[\w-]+\.json$/i;
 const CONTENT_FILENAME = /^[\w-]+\.md$/i;
@@ -89,16 +89,15 @@ const ID_PATTERN = /^[\w-]+$/;
  * /api/upload:
  *   post:
  *     summary: Upload an exercise image
- *     description: Saves a base64-encoded image at `public/exercise_images/<team>/<filename>` in the storage backend.
+ *     description: Saves a base64-encoded image at `public/exercise_images/ikgota-team16/<filename>` in the storage backend.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [team, filename, data]
+ *             required: [filename, data]
  *             properties:
- *               team: { type: string, example: ikgota-team16 }
  *               filename: { type: string, example: cykla.jpg, description: 'Must match `<name>.<jpg|jpeg|png|webp|gif>`.' }
  *               data: { type: string, description: 'Base64 data URL or raw base64 string.' }
  *     responses:
@@ -117,10 +116,7 @@ const ID_PATTERN = /^[\w-]+$/;
  */
 app.post('/api/upload', async (req: Request, res: Response) => {
   try {
-    const { team, filename, data } = req.body ?? {};
-    if (typeof team !== 'string' || !TEAM_PATTERN.test(team)) {
-      return res.status(400).json({ error: 'Invalid or missing team' });
-    }
+    const { filename, data } = req.body ?? {};
     if (typeof filename !== 'string' || !IMAGE_FILENAME.test(filename)) {
       return res.status(400).json({ error: 'Invalid filename' });
     }
@@ -129,8 +125,8 @@ app.post('/api/upload', async (req: Request, res: Response) => {
     }
     const base64 = data.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Buffer.from(base64, 'base64');
-    await storage.save(imageKey(team, filename), buffer, mimeFromName(filename));
-    res.json({ ok: true, path: `/exercise_images/${team}/${filename}` });
+    await storage.save(imageKey(filename), buffer, mimeFromName(filename));
+    res.json({ ok: true, path: `/exercise_images/${TEAM_ID}/${filename}` });
   } catch (e: any) {
     console.error('upload error', e);
     res.status(500).json({ error: e?.message ?? 'upload failed' });
@@ -143,16 +139,15 @@ app.post('/api/upload', async (req: Request, res: Response) => {
  * /api/save-crop:
  *   post:
  *     summary: Save per-card image crop metadata
- *     description: Persists the user's crop (pan + zoom) for one exercise card at `public/exercise_images/<team>/<id>.json`.
+ *     description: Persists the user's crop (pan + zoom) for one exercise card at `public/exercise_images/ikgota-team16/<id>.json`.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [team, id, crop]
+ *             required: [id, crop]
  *             properties:
- *               team: { type: string, example: ikgota-team16 }
  *               id: { type: string, example: cykla }
  *               crop: { $ref: '#/components/schemas/Crop' }
  *     responses:
@@ -167,15 +162,12 @@ app.post('/api/upload', async (req: Request, res: Response) => {
  */
 app.post('/api/save-crop', async (req: Request, res: Response) => {
   try {
-    const { team, id, crop } = req.body ?? {};
-    if (typeof team !== 'string' || !TEAM_PATTERN.test(team)) {
-      return res.status(400).json({ error: 'Invalid or missing team' });
-    }
+    const { id, crop } = req.body ?? {};
     if (typeof id !== 'string' || !ID_PATTERN.test(id)) {
       return res.status(400).json({ error: 'Invalid id' });
     }
     const buffer = Buffer.from(JSON.stringify(crop, null, 2), 'utf8');
-    await storage.save(imageKey(team, `${id}.json`), buffer, 'application/json');
+    await storage.save(imageKey(`${id}.json`), buffer, 'application/json');
     res.json({ ok: true });
   } catch (e: any) {
     console.error('save-crop error', e);
@@ -345,15 +337,11 @@ app.put('/api/content/:id', async (req: Request, res: Response) => {
 // version baked into the image at build time.
 /**
  * @openapi
- * /exercise_images/{team}/{filename}:
+ * /exercise_images/ikgota-team16/{filename}:
  *   get:
  *     summary: Serve an uploaded exercise image or crop JSON
  *     description: Reads from the storage backend (blob in prod) first; falls through to bundled static files if nothing is in storage.
  *     parameters:
- *       - name: team
- *         in: path
- *         required: true
- *         schema: { type: string }
  *       - name: filename
  *         in: path
  *         required: true
@@ -371,15 +359,14 @@ app.put('/api/content/:id', async (req: Request, res: Response) => {
  *       404: { $ref: '#/components/responses/NotFound' }
  */
 app.get(
-  '/exercise_images/:team/:filename',
+  `/exercise_images/${TEAM_ID}/:filename`,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { team, filename } = req.params;
-      if (!TEAM_PATTERN.test(team)) return next();
+      const { filename } = req.params;
       if (!IMAGE_FILENAME.test(filename) && !META_FILENAME.test(filename)) {
         return next();
       }
-      const buffer = await storage.read(imageKey(team, filename));
+      const buffer = await storage.read(imageKey(filename));
       if (!buffer) return next();
       res.setHeader('Content-Type', mimeFromName(filename));
       res.setHeader('Cache-Control', 'public, max-age=60');

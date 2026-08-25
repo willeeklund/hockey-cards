@@ -14,7 +14,6 @@ import {
 const port = 3000;
 
 // Validation patterns shared with the production Express server.
-const TEAM_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/i;
 const IMAGE_FILENAME = /^[\w-]+\.(jpg|jpeg|png|webp|gif)$/i;
 const ID_PATTERN = /^[\w-]+$/;
 
@@ -118,44 +117,38 @@ const apiPlugin = {
       },
     );
 
-    // POST /api/save-crop — writes <team>/<id>.json via the storage backend
+    // POST /api/save-crop — writes ikgota-team16/<id>.json via the storage backend
     server.middlewares.use('/api/save-crop', async (req: any, res: any) => {
       if (req.method !== 'POST') {
         return sendJson(res, 405, { error: 'Method not allowed' });
       }
       try {
-        const { team, id, crop } = await readJsonBody(req);
-        if (typeof team !== 'string' || !TEAM_PATTERN.test(team)) {
-          return sendJson(res, 400, { error: 'Invalid or missing team' });
-        }
+        const { id, crop } = await readJsonBody(req);
         if (typeof id !== 'string' || !ID_PATTERN.test(id)) {
           return sendJson(res, 400, { error: 'Invalid id' });
         }
         const buffer = Buffer.from(JSON.stringify(crop, null, 2), 'utf8');
-        await storage.save(imageKey(team, `${id}.json`), buffer, 'application/json');
+        await storage.save(imageKey(`${id}.json`), buffer, 'application/json');
         sendJson(res, 200, { ok: true });
       } catch (e: any) {
         sendJson(res, 500, { error: e?.message ?? 'save-crop failed' });
       }
     });
 
-    // POST /api/upload — writes <team>/<filename> via the storage backend
+    // POST /api/upload — writes ikgota-team16/<filename> via the storage backend
     server.middlewares.use('/api/upload', async (req: any, res: any) => {
       if (req.method !== 'POST') {
         return sendJson(res, 405, { error: 'Method not allowed' });
       }
       try {
-        const { team, filename, data } = await readJsonBody(req);
-        if (typeof team !== 'string' || !TEAM_PATTERN.test(team)) {
-          return sendJson(res, 400, { error: 'Invalid or missing team' });
-        }
+        const { filename, data } = await readJsonBody(req);
         if (typeof filename !== 'string' || !IMAGE_FILENAME.test(filename)) {
           return sendJson(res, 400, { error: 'Ogiltigt filnamn' });
         }
         const base64 = String(data).replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64, 'base64');
-        await storage.save(imageKey(team, filename), buffer, mimeFromName(filename));
-        sendJson(res, 200, { ok: true, path: `/exercise_images/${team}/${filename}` });
+        await storage.save(imageKey(filename), buffer, mimeFromName(filename));
+        sendJson(res, 200, { ok: true, path: `/exercise_images/ikgota-team16/${filename}` });
       } catch (e: any) {
         sendJson(res, 500, { error: e?.message ?? 'upload failed' });
       }

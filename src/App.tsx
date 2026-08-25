@@ -4,11 +4,8 @@ import CardBack from './components/CardBack'
 import CardEditModal from './components/CardEditModal'
 import SelectionBar from './components/SelectionBar'
 import FilterBar from './components/FilterBar'
-import TeamSelector from './components/TeamSelector'
-import TeamPicker from './components/TeamPicker'
 import NewExerciseModal from './components/NewExerciseModal'
-import { useTeam } from './context/TeamContext'
-import { FALLBACK_TEAM_ID } from './config/teams'
+import { TEAM_ID } from './config/teams'
 import { parseCard } from './utils/parseCard'
 import { assetUrl } from './utils/assetUrl'
 import './App.css'
@@ -115,11 +112,6 @@ function saveLocalCrop(id, crop) {
 
 // ── App ────────────────────────────────────────────────────────────────
 function App() {
-  const { teamId } = useTeam()
-  // Display images fall back to the most-populated team when nothing has
-  // been picked yet. Upload paths still require a real teamId.
-  const displayTeamId = teamId ?? FALLBACK_TEAM_ID
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [newExerciseOpen, setNewExerciseOpen] = useState(false)
 
   // Cards are now fetched from /api/content + /content/<id>.md at runtime
@@ -199,14 +191,13 @@ function App() {
     writeUrl(selectedIds, cards, editId, activeTags)
   }, [selectedIds, editId, activeTags, cards])
 
-  // Load saved crops from server for the active (or fallback) team.
-  // Re-runs when imageVersion bumps so a freshly-saved crop is read back
-  // instead of served from the browser cache.
+  // Load saved crops from the server. Re-runs when imageVersion bumps so a
+  // freshly-saved crop is read back instead of served from the browser cache.
   useEffect(() => {
     let cancelled = false
     Promise.all(
       cards.map(c =>
-        fetch(assetUrl(`/exercise_images/${displayTeamId}/${c.id}.json`), { cache: 'no-store' })
+        fetch(assetUrl(`/exercise_images/${TEAM_ID}/${c.id}.json`), { cache: 'no-store' })
           .then(r => r.ok ? r.json().then(crop => ({ id: c.id, crop })) : null)
           .catch(() => null)
       )
@@ -223,7 +214,7 @@ function App() {
       }
     })
     return () => { cancelled = true }
-  }, [cards, displayTeamId, imageVersion])
+  }, [cards, imageVersion])
 
   const updateTransform = useCallback((cardId, next) => {
     setTransforms(t => ({ ...t, [cardId]: next }))
@@ -300,8 +291,6 @@ function App() {
         <div className="toolbar-inner">
           <span className="toolbar-logo">🏒</span>
           <span className="toolbar-title">IK Göta Off-ice övningskort</span>
-
-          <TeamSelector onSwitch={() => setPickerOpen(true)} />
 
           <span className="toolbar-spacer" aria-hidden />
 
@@ -402,14 +391,6 @@ function App() {
             setSelectedIds(prev => new Set([...prev, id]))
           }}
         />
-      )}
-
-      {/* ── Team picker ──────────────────────────────────────────────────
-          Forced (no onClose) on first load, when nothing is selected yet.
-          Dismissible when the user opened it via the "Byt lag" button. */}
-      {teamId === null && <TeamPicker />}
-      {teamId !== null && pickerOpen && (
-        <TeamPicker onClose={() => setPickerOpen(false)} />
       )}
     </>
   )
